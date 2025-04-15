@@ -204,7 +204,7 @@ app.post('/api/games', async (req, res) => {
         // Slack-Nachricht senden
         try {
             const result = await slack.chat.postMessage({
-                channel: '#' + process.env.SLACK_CHANNEL,
+                channel: process.env.SLACK_CHANNEL,
                 text: `${game.winner} (Rang ${winnerNewRank} | ${formatRankChange(winnerChange)}) hat gegen ${game.loser} (Rang ${loserNewRank} | ${formatRankChange(loserChange)}) das Dartspiel gewonnen! 🎯`
             });
             console.log('Slack-Nachricht erfolgreich gesendet:', result);
