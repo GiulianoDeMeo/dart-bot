@@ -294,7 +294,6 @@ function showSuggestions(searchInput, dropdown, players, onSelect) {
             .map(player => `
                 <div class="search-item" data-name="${player.name}">
                     <span class="player-name">${player.name}</span>
-                    <span class="player-nickname">${player.nickname || ''}</span>
                 </div>
             `).join('');
         
