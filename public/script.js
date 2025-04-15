@@ -292,6 +292,10 @@ function setupPlayerSelection() {
             return;
         }
 
+        // Button deaktivieren während der Verarbeitung
+        submitButton.disabled = true;
+        submitButton.style.opacity = '0.5';
+
         try {
             const response = await fetch(`${API_URL}/games`, {
                 method: 'POST',
@@ -327,6 +331,10 @@ function setupPlayerSelection() {
         } catch (error) {
             console.error('Fehler:', error);
             alert('Fehler beim Speichern des Spiels');
+        } finally {
+            // Button wieder aktivieren
+            submitButton.disabled = false;
+            submitButton.style.opacity = '1';
         }
     });
 }
