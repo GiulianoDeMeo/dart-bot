@@ -282,6 +282,40 @@ function showPlayerStats(playerName) {
     `;
 }
 
+// Hilfsfunktion für die Spielersuche
+function showSuggestions(searchInput, dropdown, players, onSelect) {
+    const searchText = searchInput.value.toLowerCase();
+    const matches = players.filter(player => 
+        player.name.toLowerCase().includes(searchText)
+    );
+
+    if (matches.length > 0 && searchText.length > 0) {
+        dropdown.innerHTML = matches
+            .map(player => `
+                <div class="search-item" data-name="${player.name}">
+                    <span class="player-name">${player.name}</span>
+                    <span class="player-nickname">${player.nickname || ''}</span>
+                </div>
+            `).join('');
+        
+        dropdown.style.display = 'block';
+
+        // Event Listener für Vorschläge
+        dropdown.querySelectorAll('.search-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const playerName = item.dataset.name;
+                const player = players.find(p => p.name === playerName);
+                if (player) {
+                    onSelect(player);
+                    dropdown.style.display = 'none';
+                }
+            });
+        });
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
+
 // Spielerauswahl-Funktionalität
 function setupPlayerSelection() {
     const winnerSearch = document.getElementById('winner-search');
