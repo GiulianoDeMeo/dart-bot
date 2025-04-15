@@ -110,18 +110,28 @@ async function populatePlayerSelects() {
 
 // Aktualisiere die Top 10 Spieler
 function updateTopPlayers() {
-    // Sortiere Spieler nach Siegesquote
-    const sortedStats = [...stats].sort((a, b) => {
-        // Zuerst nach Siegesquote
-        const winRateDiff = parseFloat(b.winRate) - parseFloat(a.winRate);
-        if (winRateDiff !== 0) return winRateDiff;
-        
-        // Bei gleicher Siegesquote nach Anzahl der Spiele
-        return b.games - a.games;
+    const topPlayersList = document.getElementById('top-players-list');
+    topPlayersList.innerHTML = '';
+
+    // Sortiere die Spieler nach:
+    // 1. Anzahl der Siege (absteigend)
+    // 2. Anzahl der Spiele (aufsteigend)
+    // 3. Siegesquote (absteigend)
+    const sortedPlayers = [...players].sort((a, b) => {
+        // Zuerst nach Siegen
+        if (b.wins !== a.wins) {
+            return b.wins - a.wins;
+        }
+        // Dann nach Anzahl der Spiele (weniger ist besser)
+        if (a.games !== b.games) {
+            return a.games - b.games;
+        }
+        // Zuletzt nach Siegesquote
+        return parseFloat(b.winRate) - parseFloat(a.winRate);
     });
-    
-    // Nehme die Top 10
-    const top10 = sortedStats.slice(0, 10);
+
+    // Zeige nur die Top 10 Spieler an
+    const top10Players = sortedPlayers.slice(0, 10);
     
     topPlayersContainer.innerHTML = `
         <table class="top-players-table">
@@ -134,7 +144,7 @@ function updateTopPlayers() {
                 </tr>
             </thead>
             <tbody>
-                ${top10.map((player, index) => `
+                ${top10Players.map((player, index) => `
                     <tr>
                         <td>${index + 1}</td>
                         <td>${player.name}</td>
