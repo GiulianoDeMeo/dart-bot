@@ -14,9 +14,13 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // MongoDB Verbindung
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/dart-stats', {
+mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
+}).then(() => {
+    console.log('MongoDB Verbindung erfolgreich');
+}).catch(err => {
+    console.error('MongoDB Verbindungsfehler:', err);
 });
 
 // Spieler Schema
