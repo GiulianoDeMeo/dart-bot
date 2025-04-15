@@ -6,6 +6,7 @@ let stats = [];
 // DOM Elemente
 const submitButton = document.getElementById('submit-game');
 const statsViewSelect = document.getElementById('stats-view-select');
+const refreshButton = document.getElementById('refresh-stats');
 const top10Container = document.getElementById('top10-container');
 const playerStatsContainer = document.getElementById('player-stats-container');
 const topPlayersContainer = document.getElementById('top-players-container');
@@ -376,6 +377,34 @@ statsViewSelect.addEventListener('change', () => {
         if (playerStatsSearch) {
             playerStatsSearch.focus();
         }
+    }
+});
+
+// Event Listener für den Aktualisieren-Button
+refreshButton.addEventListener('click', async () => {
+    try {
+        // Zeige Ladeanimation
+        refreshButton.style.animation = 'spin 1s linear';
+        
+        // Lade Daten neu
+        await loadInitialData();
+        
+        // Aktualisiere die Anzeige basierend auf der aktuellen Auswahl
+        if (statsViewSelect.value === 'top10') {
+            updateTopPlayers();
+        } else if (statsViewSelect.value === 'player') {
+            const playerSelect = document.getElementById('player-select');
+            if (playerSelect) {
+                showPlayerStats(playerSelect.value);
+            }
+        }
+        
+        // Entferne Ladeanimation
+        refreshButton.style.animation = '';
+    } catch (error) {
+        console.error('Fehler beim Aktualisieren:', error);
+        alert('Fehler beim Aktualisieren der Daten. Bitte versuchen Sie es später erneut.');
+        refreshButton.style.animation = '';
     }
 });
 

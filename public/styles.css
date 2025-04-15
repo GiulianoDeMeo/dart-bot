@@ -182,7 +182,34 @@ button:hover {
 }
 
 .stats-selector {
-    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.refresh-button {
+    background-color: #008ACE;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+}
+
+.refresh-button:hover {
+    background-color: #0073b1;
+    transform: rotate(180deg);
+}
+
+.refresh-button:active {
+    transform: rotate(360deg);
 }
 
 .stats-selector select {
@@ -590,5 +617,14 @@ button:hover {
 
     .search-item {
         padding: 8px 10px;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
     }
 } 
