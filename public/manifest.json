@@ -1,0 +1,16 @@
+{
+    "name": "Pickware Dart Stats",
+    "short_name": "Dart Stats",
+    "description": "Pickware Dart Statistiken und Spielverwaltung",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#008ACE",
+    "icons": [
+        {
+            "src": "pickware-icon.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        }
+    ]
+} 

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pickware Dart Stats</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dart Stats">
+    <meta name="theme-color" content="#008ACE">
+    
+    <!-- Icons für iOS -->
+    <link rel="apple-touch-icon" href="pickware-icon.png">
+    <link rel="apple-touch-startup-image" href="pickware-icon.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="pickware-icon.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Pickware Dart Stats</h1>
+        
+        <div class="game-form">
+            <div class="player-selection">
+                <div class="player-select-container">
+                    <label>Gewinner:</label>
+                    <div class="search-select">
+                        <input type="text" class="search-input" id="winner-search" placeholder="Gewinner suchen..." autocomplete="off">
+                        <div class="search-dropdown" id="winner-dropdown"></div>
+                    </div>
+                </div>
+                <div class="player-select-container">
+                    <label>Verlierer:</label>
+                    <div class="search-select">
+                        <input type="text" class="search-input" id="loser-search" placeholder="Verlierer suchen..." autocomplete="off">
+                        <div class="search-dropdown" id="loser-dropdown"></div>
+                    </div>
+                </div>
+            </div>
+            <button id="submit-game">Spiel speichern</button>
+        </div>
+
+        <div class="stats">
+            <div class="stats-selector">
+                <select id="stats-view-select">
+                    <option value="">Stats auswählen...</option>
+                    <option value="top10">Top 10 Spieler</option>
+                    <option value="player">Spieler Stats</option>
+                </select>
+            </div>
+            
+            <div id="top10-container" class="stats-content" style="display: none;">
+                <div id="top-players-container">
+                    <!-- Hier werden die Top 10 Spieler dynamisch eingefügt -->
+                </div>
+            </div>
+            
+            <div id="player-stats-container" class="stats-content" style="display: none;">
+                <div class="player-selection">
+                    <div class="search-select">
+                        <input type="text" class="search-input" id="player-stats-search" placeholder="Spieler suchen..." autocomplete="off">
+                        <div class="search-dropdown" id="player-stats-dropdown"></div>
+                    </div>
+                </div>
+                <div id="player-stats-details">
+                    <!-- Hier werden die Stats des ausgewählten Spielers dynamisch eingefügt -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 

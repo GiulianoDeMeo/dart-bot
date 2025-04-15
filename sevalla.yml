@@ -1,0 +1,11 @@
+app: dart-bot
+runtime: nodejs18
+
+web:
+  command: node server.js
+  port: 3000
+
+env:
+  - MONGODB_URI
+  - SLACK_TOKEN
+  - SLACK_CHANNEL 

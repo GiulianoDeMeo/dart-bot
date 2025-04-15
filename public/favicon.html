@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Pickware Dart Stats Favicon</title>
+    <style>
+        .favicon-container {
+            width: 32px;
+            height: 32px;
+            background: #008ACE;
+            position: relative;
+            border-radius: 50%;
+        }
+
+        .crosshair-horizontal,
+        .crosshair-vertical {
+            position: absolute;
+            background: black;
+        }
+
+        .crosshair-horizontal {
+            width: 100%;
+            height: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .crosshair-vertical {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .letter {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: black;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="favicon-container">
+        <div class="crosshair-horizontal"></div>
+        <div class="crosshair-vertical"></div>
+        <div class="letter">P</div>
+    </div>
+</body>
+</html> 
