@@ -49,8 +49,7 @@ mongoose.connection.on('reconnected', () => {
 
 // Spieler Schema
 const playerSchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true },
-    nickname: { type: String, required: true }
+    name: { type: String, required: true, unique: true }
 });
 
 // Spiel Schema
