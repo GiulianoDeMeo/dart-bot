@@ -157,11 +157,11 @@ async function calculateRankings() {
 // Neues Spiel hinzufügen
 app.post('/api/games', async (req, res) => {
     try {
-        // Überprüfe auf doppelte Spiele in den letzten 30 Sekunden
+        // Überprüfe auf doppelte Spiele in den letzten 5 Sekunden
         const recentGames = await Game.find({
             winner: req.body.winner,
             loser: req.body.loser,
-            date: { $gte: new Date(Date.now() - 30000) } // Spiele der letzten 30 Sekunden
+            date: { $gte: new Date(Date.now() - 5000) } // Spiele der letzten 5 Sekunden
         });
 
         if (recentGames.length > 0) {
