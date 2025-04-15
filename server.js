@@ -157,6 +157,19 @@ async function calculateRankings() {
 // Neues Spiel hinzufügen
 app.post('/api/games', async (req, res) => {
     try {
+        // Überprüfe auf doppelte Spiele in den letzten 30 Sekunden
+        const recentGames = await Game.find({
+            winner: req.body.winner,
+            loser: req.body.loser,
+            date: { $gte: new Date(Date.now() - 30000) } // Spiele der letzten 30 Sekunden
+        });
+
+        if (recentGames.length > 0) {
+            return res.status(400).json({ 
+                message: 'Dieses Spiel wurde bereits vor kurzem eingetragen. Bitte warten Sie einen Moment.' 
+            });
+        }
+
         // Hole aktuelle Rangliste vor dem Spiel
         const oldRankings = await calculateRankings();
         

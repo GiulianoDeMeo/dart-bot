@@ -322,7 +322,8 @@ function setupPlayerSelection() {
             });
 
             if (!response.ok) {
-                throw new Error('Fehler beim Speichern des Spiels');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Fehler beim Speichern des Spiels');
             }
 
             // Setze die Eingabefelder zurück
