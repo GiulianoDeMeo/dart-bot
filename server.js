@@ -325,6 +325,23 @@ app.get('/api/stats', async (req, res) => {
             };
         }).filter(Boolean); // Entferne null Einträge (Spieler ohne Spiele)
         
+        // Sortiere die Statistiken nach:
+        // 1. Anzahl der Siege (absteigend)
+        // 2. Anzahl der Spiele (aufsteigend)
+        // 3. Siegesquote (absteigend)
+        stats.sort((a, b) => {
+            // Zuerst nach Siegen
+            if (b.wins !== a.wins) {
+                return b.wins - a.wins;
+            }
+            // Dann nach Anzahl der Spiele (weniger ist besser)
+            if (a.games !== b.games) {
+                return a.games - b.games;
+            }
+            // Zuletzt nach Siegesquote
+            return parseFloat(b.winRate) - parseFloat(a.winRate);
+        });
+        
         res.json(stats);
     } catch (error) {
         res.status(500).json({ message: error.message });
