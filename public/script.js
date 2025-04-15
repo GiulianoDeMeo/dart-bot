@@ -113,25 +113,28 @@ function updateTopPlayers() {
     const topPlayersList = document.getElementById('top-players-list');
     topPlayersList.innerHTML = '';
 
-    // Sortiere die Spieler nach:
-    // 1. Anzahl der Siege (absteigend)
-    // 2. Anzahl der Spiele (aufsteigend)
-    // 3. Siegesquote (absteigend)
-    const sortedPlayers = [...players].sort((a, b) => {
-        // Zuerst nach Siegen
-        if (b.wins !== a.wins) {
-            return b.wins - a.wins;
-        }
-        // Dann nach Anzahl der Spiele (weniger ist besser)
-        if (a.games !== b.games) {
-            return a.games - b.games;
-        }
-        // Zuletzt nach Siegesquote
-        return parseFloat(b.winRate) - parseFloat(a.winRate);
-    });
+    // Sortiere die Spieler basierend auf den Statistiken
+    const playersWithStats = players
+        .map(player => {
+            const playerStats = stats.find(s => s.name === player.name);
+            return playerStats || null;
+        })
+        .filter(player => player !== null && player.games > 0)
+        .sort((a, b) => {
+            // Zuerst nach Siegen
+            if (b.wins !== a.wins) {
+                return b.wins - a.wins;
+            }
+            // Dann nach Anzahl der Spiele (weniger ist besser)
+            if (a.games !== b.games) {
+                return a.games - b.games;
+            }
+            // Zuletzt nach Siegesquote
+            return parseFloat(b.winRate) - parseFloat(a.winRate);
+        });
 
     // Zeige nur die Top 10 Spieler an
-    const top10Players = sortedPlayers.slice(0, 10);
+    const top10Players = playersWithStats.slice(0, 10);
     
     topPlayersContainer.innerHTML = `
         <table class="top-players-table">
