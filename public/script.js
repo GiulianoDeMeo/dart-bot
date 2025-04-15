@@ -10,8 +10,12 @@ const top10Container = document.getElementById('top10-container');
 const playerStatsContainer = document.getElementById('player-stats-container');
 const topPlayersContainer = document.getElementById('top-players-container');
 
-// API URL - Nutze die aktuelle Host-Adresse
-const API_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
+// Globale Variablen für ausgewählte Spieler
+let selectedWinner = null;
+let selectedLoser = null;
+
+// API URL - Nutze die Heroku-URL
+const API_URL = 'https://dart-bot-stats-40bf895a4f48.herokuapp.com/api';
 
 // Lade initiale Daten
 async function loadInitialData() {
@@ -30,30 +34,48 @@ async function loadInitialData() {
 // Lade Spieler
 async function loadPlayers() {
     try {
+        console.log('Lade Spieler von:', `${API_URL}/players`);
         const response = await fetch(`${API_URL}/players`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         players = await response.json();
+        console.log('Spieler geladen:', players);
     } catch (error) {
         console.error('Fehler beim Laden der Spieler:', error);
+        alert('Fehler beim Laden der Spieler. Bitte versuchen Sie es später erneut.');
     }
 }
 
 // Lade Spiele
 async function loadGames() {
     try {
+        console.log('Lade Spiele von:', `${API_URL}/games`);
         const response = await fetch(`${API_URL}/games`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         games = await response.json();
+        console.log('Spiele geladen:', games);
     } catch (error) {
         console.error('Fehler beim Laden der Spiele:', error);
+        alert('Fehler beim Laden der Spiele. Bitte versuchen Sie es später erneut.');
     }
 }
 
 // Lade Statistiken
 async function loadStats() {
     try {
+        console.log('Lade Statistiken von:', `${API_URL}/stats`);
         const response = await fetch(`${API_URL}/stats`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         stats = await response.json();
+        console.log('Statistiken geladen:', stats);
     } catch (error) {
         console.error('Fehler beim Laden der Statistiken:', error);
+        alert('Fehler beim Laden der Statistiken. Bitte versuchen Sie es später erneut.');
     }
 }
 
@@ -195,7 +217,8 @@ function showPlayerStats(playerName) {
 function showSuggestions(searchInput, dropdown, players, onSelect) {
     const searchText = searchInput.value.toLowerCase();
     const matches = players.filter(player => 
-        player.name.toLowerCase().includes(searchText)
+        player.name.toLowerCase().includes(searchText) ||
+        player.nickname.toLowerCase().includes(searchText)
     );
 
     if (matches.length > 0 && searchText.length > 0) {
@@ -203,10 +226,11 @@ function showSuggestions(searchInput, dropdown, players, onSelect) {
             .map(player => `
                 <div class="search-item" data-name="${player.name}">
                     <span class="player-name">${player.name}</span>
+                    <span class="player-nickname">${player.nickname}</span>
                 </div>
             `).join('');
         
-        dropdown.classList.add('active');
+        dropdown.style.display = 'block';
 
         // Event Listener für Vorschläge
         dropdown.querySelectorAll('.search-item').forEach(item => {
@@ -214,12 +238,12 @@ function showSuggestions(searchInput, dropdown, players, onSelect) {
                 const playerName = item.dataset.name;
                 const player = players.find(p => p.name === playerName);
                 searchInput.value = player.name;
-                dropdown.classList.remove('active');
+                dropdown.style.display = 'none';
                 onSelect(player);
             });
         });
     } else {
-        dropdown.classList.remove('active');
+        dropdown.style.display = 'none';
     }
 }
 
@@ -229,52 +253,44 @@ function setupPlayerSelection() {
     const loserSearch = document.getElementById('loser-search');
     const winnerDropdown = document.getElementById('winner-dropdown');
     const loserDropdown = document.getElementById('loser-dropdown');
-    
-    let selectedWinner = null;
-    let selectedLoser = null;
 
     // Event Listener für Sucheingaben
     winnerSearch.addEventListener('input', () => {
         showSuggestions(winnerSearch, winnerDropdown, players, (player) => {
             selectedWinner = player;
-            winnerSearch.classList.add('has-selection');
+            winnerSearch.value = player.name;
         });
     });
 
     loserSearch.addEventListener('input', () => {
         showSuggestions(loserSearch, loserDropdown, players, (player) => {
             selectedLoser = player;
-            loserSearch.classList.add('has-selection');
+            loserSearch.value = player.name;
         });
     });
 
-    // Schließe Dropdowns beim Klick außerhalb
+    // Event Listener für Klicks außerhalb der Dropdowns
     document.addEventListener('click', (e) => {
         if (!winnerSearch.contains(e.target) && !winnerDropdown.contains(e.target)) {
-            winnerDropdown.classList.remove('active');
+            winnerDropdown.style.display = 'none';
         }
         if (!loserSearch.contains(e.target) && !loserDropdown.contains(e.target)) {
-            loserDropdown.classList.remove('active');
+            loserDropdown.style.display = 'none';
         }
     });
 
-    // Event Listener für das Formular
-    submitButton.addEventListener('click', async (e) => {
-        e.preventDefault();
-        
+    // Submit Button Event Listener
+    submitButton.addEventListener('click', async () => {
         if (!selectedWinner || !selectedLoser) {
-            alert('Bitte wähle beide Spieler aus.');
+            alert('Bitte wähle Gewinner und Verlierer aus.');
             return;
         }
-        
+
         if (selectedWinner.name === selectedLoser.name) {
-            alert('Bitte wähle zwei verschiedene Spieler aus.');
+            alert('Gewinner und Verlierer müssen unterschiedlich sein.');
             return;
         }
-        
-        submitButton.disabled = true;
-        submitButton.textContent = 'Speichere...';
-        
+
         try {
             const response = await fetch(`${API_URL}/games`, {
                 method: 'POST',
@@ -288,33 +304,28 @@ function setupPlayerSelection() {
                         type: '501',
                         legs: 3
                     }
-                })
+                }),
             });
 
             if (!response.ok) {
-                throw new Error('Netzwerk-Antwort war nicht ok');
+                throw new Error('Fehler beim Speichern des Spiels');
             }
 
-            alert('Spiel wurde erfolgreich gespeichert!');
-            
-            // Setze Formular zurück
+            // Setze die Eingabefelder zurück
             winnerSearch.value = '';
             loserSearch.value = '';
-            winnerSearch.classList.remove('has-selection');
-            loserSearch.classList.remove('has-selection');
             selectedWinner = null;
             selectedLoser = null;
-            
-            // Aktualisiere die Statistiken
+
+            // Lade die Daten neu
+            await loadGames();
             await loadStats();
             updateTopPlayers();
-            
+
+            alert('Spiel erfolgreich gespeichert!');
         } catch (error) {
-            console.error('Fehler beim Speichern des Spiels:', error);
-            alert('Fehler beim Speichern des Spiels. Bitte versuche es erneut.');
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = 'Spiel speichern';
+            console.error('Fehler:', error);
+            alert('Fehler beim Speichern des Spiels');
         }
     });
 }
