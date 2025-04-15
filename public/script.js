@@ -14,6 +14,7 @@ const topPlayersContainer = document.getElementById('top-players-container');
 // Globale Variablen für ausgewählte Spieler
 let selectedWinner = null;
 let selectedLoser = null;
+let isSubmitting = false; // Globale Variable für die Sperre
 
 // API URL - Nutze die Heroku-URL
 const API_URL = 'https://dart-bot-stats-40bf895a4f48.herokuapp.com/api';
@@ -282,6 +283,12 @@ function setupPlayerSelection() {
 
     // Submit Button Event Listener
     submitButton.addEventListener('click', async () => {
+        // Prüfe ob bereits ein Spiel gesendet wird
+        if (isSubmitting) {
+            console.log('Ein Spiel wird bereits gesendet...');
+            return;
+        }
+
         if (!selectedWinner || !selectedLoser) {
             alert('Bitte wähle Gewinner und Verlierer aus.');
             return;
@@ -292,9 +299,11 @@ function setupPlayerSelection() {
             return;
         }
 
-        // Button deaktivieren während der Verarbeitung
+        // Aktiviere die Sperre und deaktiviere den Button
+        isSubmitting = true;
         submitButton.disabled = true;
         submitButton.style.opacity = '0.5';
+        submitButton.textContent = 'Wird gespeichert...';
 
         try {
             const response = await fetch(`${API_URL}/games`, {
@@ -332,9 +341,11 @@ function setupPlayerSelection() {
             console.error('Fehler:', error);
             alert('Fehler beim Speichern des Spiels');
         } finally {
-            // Button wieder aktivieren
+            // Setze den Button zurück und deaktiviere die Sperre
             submitButton.disabled = false;
             submitButton.style.opacity = '1';
+            submitButton.textContent = 'Spiel speichern';
+            isSubmitting = false;
         }
     });
 }
