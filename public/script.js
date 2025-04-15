@@ -194,7 +194,21 @@ function updateTopPlayers() {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const playerName = link.dataset.player;
+            
+            // Wechsle zur Einzelspieler-Ansicht
             statsViewSelect.value = 'player';
+            
+            // Aktualisiere die Ansicht
+            document.querySelectorAll('.stats-content').forEach(container => {
+                container.style.display = 'none';
+                container.classList.remove('active');
+            });
+            
+            top10Container.style.display = 'none';
+            playerStatsContainer.style.display = 'block';
+            setTimeout(() => playerStatsContainer.classList.add('active'), 10);
+            
+            // Zeige die Statistiken des ausgewählten Spielers
             showPlayerStats(playerName);
         });
     });
