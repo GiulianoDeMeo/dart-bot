@@ -282,38 +282,6 @@ function showPlayerStats(playerName) {
     `;
 }
 
-// Funktion zum Anzeigen der Vorschläge
-function showSuggestions(searchInput, dropdown, players, onSelect) {
-    const searchText = searchInput.value.toLowerCase();
-    const matches = players.filter(player => 
-        player.name.toLowerCase().includes(searchText)
-    );
-
-    if (matches.length > 0 && searchText.length > 0) {
-        dropdown.innerHTML = matches
-            .map(player => `
-                <div class="search-item" data-name="${player.name}">
-                    <span class="player-name">${player.name}</span>
-                </div>
-            `).join('');
-        
-        dropdown.style.display = 'block';
-
-        // Event Listener für Vorschläge
-        dropdown.querySelectorAll('.search-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const playerName = item.dataset.name;
-                const player = players.find(p => p.name === playerName);
-                searchInput.value = player.name;
-                dropdown.style.display = 'none';
-                onSelect(player);
-            });
-        });
-    } else {
-        dropdown.style.display = 'none';
-    }
-}
-
 // Spielerauswahl-Funktionalität
 function setupPlayerSelection() {
     const winnerSearch = document.getElementById('winner-search');
@@ -421,21 +389,46 @@ function setupPlayerStatsSelection() {
     const playerStatsSearch = document.getElementById('player-stats-search');
     const playerStatsDropdown = document.getElementById('player-stats-dropdown');
     
-    let selectedPlayer = null;
+    if (!playerStatsSearch || !playerStatsDropdown) {
+        console.error('Spielersuche-Elemente nicht gefunden');
+        return;
+    }
 
     // Event Listener für Sucheingaben
     playerStatsSearch.addEventListener('input', () => {
-        showSuggestions(playerStatsSearch, playerStatsDropdown, players, (player) => {
-            selectedPlayer = player;
-            playerStatsSearch.classList.add('has-selection');
-            showPlayerStats(player.name);
-        });
+        const searchText = playerStatsSearch.value.toLowerCase();
+        const matches = players.filter(player => 
+            player.name.toLowerCase().includes(searchText)
+        );
+
+        if (matches.length > 0 && searchText.length > 0) {
+            playerStatsDropdown.innerHTML = matches
+                .map(player => `
+                    <div class="search-item" data-name="${player.name}">
+                        <span class="player-name">${player.name}</span>
+                    </div>
+                `).join('');
+            
+            playerStatsDropdown.style.display = 'block';
+
+            // Event Listener für Vorschläge
+            playerStatsDropdown.querySelectorAll('.search-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const playerName = item.dataset.name;
+                    playerStatsSearch.value = playerName;
+                    playerStatsDropdown.style.display = 'none';
+                    showPlayerStats(playerName);
+                });
+            });
+        } else {
+            playerStatsDropdown.style.display = 'none';
+        }
     });
 
     // Schließe Dropdown beim Klick außerhalb
     document.addEventListener('click', (e) => {
         if (!playerStatsSearch.contains(e.target) && !playerStatsDropdown.contains(e.target)) {
-            playerStatsDropdown.classList.remove('active');
+            playerStatsDropdown.style.display = 'none';
         }
     });
 }
