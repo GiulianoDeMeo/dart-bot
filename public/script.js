@@ -180,7 +180,7 @@ function updateTopPlayers() {
                 ${top10Players.map((player, index) => `
                     <tr>
                         <td>${index + 1}</td>
-                        <td>${player.name}</td>
+                        <td><span class="player-link" data-player="${player.name}">${player.name}</span></td>
                         <td>${player.winRate}%</td>
                         <td>${player.games} (${player.wins}S ${player.losses}N)</td>
                     </tr>
@@ -188,6 +188,16 @@ function updateTopPlayers() {
             </tbody>
         </table>
     `;
+
+    // Füge Event Listener für die Spielerlinks hinzu
+    document.querySelectorAll('.player-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const playerName = link.dataset.player;
+            statsViewSelect.value = 'player';
+            showPlayerStats(playerName);
+        });
+    });
 }
 
 // Zeige Stats für einen Spieler an
