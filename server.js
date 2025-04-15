@@ -137,12 +137,21 @@ async function calculateRankings() {
         };
     }).filter(Boolean); // Entferne null Einträge (Spieler ohne Spiele)
     
-    // Sortiere nach Gewinnrate und dann nach Anzahl der Spiele
+    // Sortiere nach:
+    // 1. Anzahl der Siege (absteigend)
+    // 2. Anzahl der Spiele (aufsteigend)
+    // 3. Siegesquote (absteigend)
     const sortedPlayers = playerStats.sort((a, b) => {
-        if (b.winRate !== a.winRate) {
-            return b.winRate - a.winRate;
+        // Zuerst nach Siegen
+        if (b.wins !== a.wins) {
+            return b.wins - a.wins;
         }
-        return b.totalGames - a.totalGames;
+        // Dann nach Anzahl der Spiele (weniger ist besser)
+        if (a.totalGames !== b.totalGames) {
+            return a.totalGames - b.totalGames;
+        }
+        // Zuletzt nach Siegesquote
+        return b.winRate - a.winRate;
     });
     
     // Erstelle ein Mapping von Spielername zu Rang
