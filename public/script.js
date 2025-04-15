@@ -11,6 +11,18 @@ const top10Container = document.getElementById('top10-container');
 const playerStatsContainer = document.getElementById('player-stats-container');
 const topPlayersContainer = document.getElementById('top-players-container');
 
+// Überprüfe, ob alle erforderlichen DOM-Elemente vorhanden sind
+if (!submitButton || !statsViewSelect || !refreshButton || !top10Container || !playerStatsContainer || !topPlayersContainer) {
+    console.error('Erforderliche DOM-Elemente nicht gefunden:', {
+        submitButton: !!submitButton,
+        statsViewSelect: !!statsViewSelect,
+        refreshButton: !!refreshButton,
+        top10Container: !!top10Container,
+        playerStatsContainer: !!playerStatsContainer,
+        topPlayersContainer: !!topPlayersContainer
+    });
+}
+
 // Globale Variablen für ausgewählte Spieler
 let selectedWinner = null;
 let selectedLoser = null;
@@ -120,12 +132,6 @@ function updateTopPlayers() {
     console.log('Verfügbare Spieler:', players);
     console.log('Verfügbare Statistiken:', stats);
 
-    const topPlayersList = document.getElementById('top-players-list');
-    if (!topPlayersList) {
-        console.error('Top players list element nicht gefunden');
-        return;
-    }
-
     // Sortiere die Spieler basierend auf den Statistiken
     const playersWithStats = players
         .map(player => {
@@ -154,6 +160,11 @@ function updateTopPlayers() {
 
     // Zeige nur die Top 10 Spieler an
     const top10Players = sortedPlayers.slice(0, 10);
+    
+    if (!topPlayersContainer) {
+        console.error('Top players container nicht gefunden');
+        return;
+    }
     
     topPlayersContainer.innerHTML = `
         <table class="top-players-table">
