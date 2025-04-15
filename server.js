@@ -14,13 +14,37 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // MongoDB Verbindung
+console.log('Versuche Verbindung zur MongoDB herzustellen...');
+console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Vorhanden' : 'Fehlt');
+
 mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => {
-    console.log('MongoDB Verbindung erfolgreich');
+    console.log('MongoDB Verbindung erfolgreich hergestellt');
+    console.log('Datenbank:', mongoose.connection.name);
+    console.log('Host:', mongoose.connection.host);
 }).catch(err => {
     console.error('MongoDB Verbindungsfehler:', err);
+    console.error('Details:', {
+        name: err.name,
+        message: err.message,
+        code: err.code
+    });
+    process.exit(1); // Beende den Server bei Verbindungsfehler
+});
+
+// Weitere Verbindungs-Event-Handler
+mongoose.connection.on('error', err => {
+    console.error('MongoDB Fehler nach Verbindung:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB Verbindung getrennt');
+});
+
+mongoose.connection.on('reconnected', () => {
+    console.log('MongoDB Verbindung wiederhergestellt');
 });
 
 // Spieler Schema
@@ -43,7 +67,7 @@ const gameSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
     format: {
         type: { type: String, enum: ['501', '301'], default: '501' },
-        legs: { type: Number, required: true }
+        legs: { type: Number, required: true, default: 3 }
     },
     highestCheckout: { type: Number }
 });
