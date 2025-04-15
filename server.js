@@ -120,6 +120,11 @@ async function calculateRankings() {
             !game.isMultiplayer && (game.winner === player.name || game.loser === player.name)
         );
         
+        // Nur Spieler mit mindestens einem Spiel berücksichtigen
+        if (playerGames.length === 0) {
+            return null;
+        }
+        
         const wins = playerGames.filter(game => game.winner === player.name).length;
         const totalGames = playerGames.length;
         const winRate = totalGames > 0 ? (wins / totalGames) : 0;
@@ -130,7 +135,7 @@ async function calculateRankings() {
             totalGames,
             winRate
         };
-    });
+    }).filter(Boolean); // Entferne null Einträge (Spieler ohne Spiele)
     
     // Sortiere nach Gewinnrate und dann nach Anzahl der Spiele
     const sortedPlayers = playerStats.sort((a, b) => {
@@ -235,6 +240,11 @@ app.get('/api/stats', async (req, res) => {
                 }
             });
             
+            // Nur Spieler mit mindestens einem Spiel zurückgeben
+            if (playerGames.length === 0) {
+                return null;
+            }
+            
             // Berechne Siege und Niederlagen
             let wins = 0;
             let losses = 0;
@@ -291,7 +301,7 @@ app.get('/api/stats', async (req, res) => {
                 winRate,
                 headToHead
             };
-        });
+        }).filter(Boolean); // Entferne null Einträge (Spieler ohne Spiele)
         
         res.json(stats);
     } catch (error) {
