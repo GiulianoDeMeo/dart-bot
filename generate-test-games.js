@@ -80,7 +80,7 @@ async function generateTestGames() {
         await Game.deleteMany({});
 
         const games = [];
-        const gamesPerMatchup = 10;
+        const totalGames = 100; // Genau 100 Spiele
         
         // Weise jedem Spieler einen Skill-Level zu (0.5-1.0)
         const playerSkills = {};
@@ -88,48 +88,36 @@ async function generateTestGames() {
             playerSkills[player.name] = 0.5 + Math.random() * 0.5;
         });
 
-        for (let i = 0; i < players.length; i++) {
-            for (let j = 0; j < players.length; j++) {
-                if (i !== j) {
-                    const player1 = players[i];
-                    const player2 = players[j];
-                    const skill1 = playerSkills[player1.name];
-                    const skill2 = playerSkills[player2.name];
+        // Generiere genau 100 zufällige Spiele
+        for (let i = 0; i < totalGames; i++) {
+            const player1 = players[Math.floor(Math.random() * players.length)];
+            let player2;
+            do {
+                player2 = players[Math.floor(Math.random() * players.length)];
+            } while (player2.name === player1.name);
 
-                    for (let k = 0; k < gamesPerMatchup; k++) {
-                        const randomMinutes = Math.floor(Math.random() * 30) + 1;
-                        const gameDate = new Date();
-                        gameDate.setMinutes(gameDate.getMinutes() - randomMinutes);
-
-                        // Bestimme Gewinner basierend auf Skill
-                        const isPlayer1Winner = Math.random() < (skill1 / (skill1 + skill2));
-                        const winner = isPlayer1Winner ? player1 : player2;
-                        const loser = isPlayer1Winner ? player2 : player1;
-
-                        // Generiere zufällige Anzahl von Legs (3-5)
-                        const numLegs = Math.floor(Math.random() * 3) + 3;
-
-                        // Generiere zufälligen Checkout (20-170)
-                        const highestCheckout = Math.floor(Math.random() * 151) + 20;
-
-                        games.push({
-                            winner: winner.name,
-                            loser: loser.name,
-                            date: gameDate,
-                            format: {
-                                type: '501',
-                                legs: numLegs
-                            },
-                            highestCheckout
-                        });
-                    }
+            const skill1 = playerSkills[player1.name];
+            const skill2 = playerSkills[player2.name];
+            
+            const isPlayer1Winner = Math.random() < (skill1 / (skill1 + skill2));
+            
+            const game = {
+                winner: isPlayer1Winner ? player1.name : player2.name,
+                loser: isPlayer1Winner ? player2.name : player1.name,
+                date: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)),
+                format: {
+                    type: '501',
+                    legs: 3
                 }
-            }
+            };
+            
+            games.push(game);
         }
 
+        // Speichere die Spiele in der Datenbank
         await Game.insertMany(games);
-
-        console.log(`${games.length} Testspiele wurden erfolgreich generiert!`);
+        
+        console.log(`${totalGames} Testspiele wurden erfolgreich generiert!`);
         console.log('\nSpieler Skill-Levels:');
         Object.entries(playerSkills).forEach(([name, skill]) => {
             console.log(`${name}: ${(skill * 100).toFixed(1)}%`);
