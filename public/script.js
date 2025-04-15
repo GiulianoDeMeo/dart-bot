@@ -417,6 +417,14 @@ function setupPlayerStatsSelection() {
                     const playerName = item.dataset.name;
                     playerStatsSearch.value = playerName;
                     playerStatsDropdown.style.display = 'none';
+                    
+                    // Wechsle zur Einzelspieler-Ansicht
+                    statsViewSelect.value = 'player';
+                    top10Container.style.display = 'none';
+                    playerStatsContainer.style.display = 'block';
+                    playerStatsContainer.classList.add('active');
+                    
+                    // Zeige die Statistiken des ausgewählten Spielers
                     showPlayerStats(playerName);
                 });
             });
