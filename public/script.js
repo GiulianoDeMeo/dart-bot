@@ -75,6 +75,12 @@ async function loadStats() {
         }
         stats = await response.json();
         console.log('Statistiken geladen:', stats);
+        
+        // Überprüfe, ob die Statistiken gültig sind
+        if (!Array.isArray(stats)) {
+            console.error('Ungültiges Statistik-Format:', stats);
+            stats = [];
+        }
     } catch (error) {
         console.error('Fehler beim Laden der Statistiken:', error);
         alert('Fehler beim Laden der Statistiken. Bitte versuchen Sie es später erneut.');
@@ -110,31 +116,44 @@ async function populatePlayerSelects() {
 
 // Aktualisiere die Top 10 Spieler
 function updateTopPlayers() {
+    console.log('Aktualisiere Top 10 Spieler');
+    console.log('Verfügbare Spieler:', players);
+    console.log('Verfügbare Statistiken:', stats);
+
     const topPlayersList = document.getElementById('top-players-list');
-    topPlayersList.innerHTML = '';
+    if (!topPlayersList) {
+        console.error('Top players list element nicht gefunden');
+        return;
+    }
 
     // Sortiere die Spieler basierend auf den Statistiken
     const playersWithStats = players
         .map(player => {
             const playerStats = stats.find(s => s.name === player.name);
+            console.log(`Statistiken für ${player.name}:`, playerStats);
             return playerStats || null;
         })
-        .filter(player => player !== null && player.games > 0)
-        .sort((a, b) => {
-            // Zuerst nach Siegen
-            if (b.wins !== a.wins) {
-                return b.wins - a.wins;
-            }
-            // Dann nach Anzahl der Spiele (weniger ist besser)
-            if (a.games !== b.games) {
-                return a.games - b.games;
-            }
-            // Zuletzt nach Siegesquote
-            return parseFloat(b.winRate) - parseFloat(a.winRate);
-        });
+        .filter(player => player !== null && player.games > 0);
+
+    console.log('Spieler mit Statistiken:', playersWithStats);
+
+    const sortedPlayers = playersWithStats.sort((a, b) => {
+        // Zuerst nach Siegen
+        if (b.wins !== a.wins) {
+            return b.wins - a.wins;
+        }
+        // Dann nach Anzahl der Spiele (weniger ist besser)
+        if (a.games !== b.games) {
+            return a.games - b.games;
+        }
+        // Zuletzt nach Siegesquote
+        return parseFloat(b.winRate) - parseFloat(a.winRate);
+    });
+
+    console.log('Sortierte Spieler:', sortedPlayers);
 
     // Zeige nur die Top 10 Spieler an
-    const top10Players = playersWithStats.slice(0, 10);
+    const top10Players = sortedPlayers.slice(0, 10);
     
     topPlayersContainer.innerHTML = `
         <table class="top-players-table">
@@ -232,8 +251,7 @@ function showPlayerStats(playerName) {
 function showSuggestions(searchInput, dropdown, players, onSelect) {
     const searchText = searchInput.value.toLowerCase();
     const matches = players.filter(player => 
-        player.name.toLowerCase().includes(searchText) ||
-        player.nickname.toLowerCase().includes(searchText)
+        player.name.toLowerCase().includes(searchText)
     );
 
     if (matches.length > 0 && searchText.length > 0) {
@@ -241,7 +259,6 @@ function showSuggestions(searchInput, dropdown, players, onSelect) {
             .map(player => `
                 <div class="search-item" data-name="${player.name}">
                     <span class="player-name">${player.name}</span>
-                    <span class="player-nickname">${player.nickname}</span>
                 </div>
             `).join('');
         
