@@ -28,8 +28,10 @@ let selectedWinner = null;
 let selectedLoser = null;
 let isSubmitting = false; // Globale Variable für die Sperre
 
-// API URL - Nutze die Heroku-URL
-const API_URL = 'https://dart-bot-stats-40bf895a4f48.herokuapp.com/api';
+// API URL - Nutze die lokale URL für Entwicklung
+const API_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000/api'
+    : 'https://dart-bot-stats-40bf895a4f48.herokuapp.com/api';
 
 // Lade initiale Daten
 async function loadInitialData() {
@@ -101,10 +103,18 @@ async function loadStats() {
 
 // Sortiere Spieler nach Anzahl der Spiele
 function getSortedPlayers() {
-    return players.sort((a, b) => {
-        const statsA = stats.find(s => s.name === a.name) || { games: 0 };
-        const statsB = stats.find(s => s.name === b.name) || { games: 0 };
-        return statsB.games - statsA.games;
+    // Verwende direkt die vom Backend geladenen Statistiken
+    return [...stats].sort((a, b) => {
+        // Zuerst nach Siegen
+        if (b.wins !== a.wins) {
+            return b.wins - a.wins;
+        }
+        // Dann nach Anzahl der Spiele (weniger ist besser)
+        if (a.games !== b.games) {
+            return a.games - b.games;
+        }
+        // Zuletzt nach Siegesquote
+        return parseFloat(b.winRate) - parseFloat(a.winRate);
     });
 }
 
@@ -129,21 +139,10 @@ async function populatePlayerSelects() {
 // Aktualisiere die Top 10 Spieler
 function updateTopPlayers() {
     console.log('Aktualisiere Top 10 Spieler');
-    console.log('Verfügbare Spieler:', players);
     console.log('Verfügbare Statistiken:', stats);
 
-    // Sortiere die Spieler basierend auf den Statistiken
-    const playersWithStats = players
-        .map(player => {
-            const playerStats = stats.find(s => s.name === player.name);
-            console.log(`Statistiken für ${player.name}:`, playerStats);
-            return playerStats || null;
-        })
-        .filter(player => player !== null && player.games > 0);
-
-    console.log('Spieler mit Statistiken:', playersWithStats);
-
-    const sortedPlayers = playersWithStats.sort((a, b) => {
+    // Verwende direkt die vom Backend geladenen Statistiken
+    const sortedPlayers = [...stats].sort((a, b) => {
         // Zuerst nach Siegen
         if (b.wins !== a.wins) {
             return b.wins - a.wins;
@@ -294,6 +293,7 @@ function showSuggestions(searchInput, dropdown, players, onSelect) {
             .map(player => `
                 <div class="search-item" data-name="${player.name}">
                     <span class="player-name">${player.name}</span>
+                    <span class="player-nickname">${player.nickname || ''}</span>
                 </div>
             `).join('');
         

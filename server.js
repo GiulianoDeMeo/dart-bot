@@ -9,7 +9,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: '*', // Erlaube alle Ursprünge im Entwicklungsmodus
+    methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH']
+}));
 app.use(express.json());
 app.use(express.static('public'));
 
@@ -116,16 +119,37 @@ async function calculateRankings() {
     
     // Berechne Statistiken für jeden Spieler
     const playerStats = players.map(player => {
-        const playerGames = games.filter(game => 
-            !game.isMultiplayer && (game.winner === player.name || game.loser === player.name)
-        );
+        const playerGames = games.filter(game => {
+            if (game.isMultiplayer) {
+                return game.players.includes(player.name);
+            } else {
+                return game.winner === player.name || game.loser === player.name;
+            }
+        });
         
         // Nur Spieler mit mindestens einem Spiel berücksichtigen
         if (playerGames.length === 0) {
             return null;
         }
         
-        const wins = playerGames.filter(game => game.winner === player.name).length;
+        let wins = 0;
+        let losses = 0;
+        
+        playerGames.forEach(game => {
+            if (game.isMultiplayer) {
+                // Bei Multiplayer-Spielen zählen wir nur die Teilnahme
+                wins += 0;
+                losses += 1;
+            } else {
+                // Bei 1:1 Spielen
+                if (game.winner === player.name) {
+                    wins += 1;
+                } else if (game.loser === player.name) {
+                    losses += 1;
+                }
+            }
+        });
+        
         const totalGames = playerGames.length;
         const winRate = totalGames > 0 ? (wins / totalGames) : 0;
         
