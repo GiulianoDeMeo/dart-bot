@@ -27,6 +27,7 @@ mongoose.connect(process.env.MONGODB_URI, {
     console.log('MongoDB Verbindung erfolgreich hergestellt');
     console.log('Datenbank:', mongoose.connection.name);
     console.log('Host:', mongoose.connection.host);
+    console.log('Verbundene Datenbank:', mongoose.connection.db.databaseName);
 }).catch(err => {
     console.error('MongoDB Verbindungsfehler:', err);
     console.error('Details:', {
@@ -52,7 +53,9 @@ mongoose.connection.on('reconnected', () => {
 
 // Spieler Schema
 const playerSchema = new mongoose.Schema({
-    name: { type: String, required: true, unique: true }
+    name: { type: String, required: true, unique: true },
+    eloRating: { type: Number, default: 1000 }, // Startwert auf 1000 geändert
+    gamesPlayed: { type: Number, default: 0 }   // Für K-Faktor Berechnung
 });
 
 // Spiel Schema
@@ -80,12 +83,91 @@ const Game = mongoose.model('Game', gameSchema);
 // Slack Client initialisieren
 const slack = new WebClient(process.env.SLACK_TOKEN);
 
+// Elo Rating Berechnungsfunktionen
+function calculateExpectedScore(playerRating, opponentRating) {
+    return 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
+}
+
+function calculateKFactor(gamesPlayed) {
+    // K-Faktor basierend auf Spielerfahrung
+    if (gamesPlayed < 30) return 32;  // Anfänger
+    if (gamesPlayed < 100) return 24; // Fortgeschrittene
+    return 16;                        // Experten
+}
+
+function updateEloRatings(winner, loser) {
+    const kWinner = calculateKFactor(winner.gamesPlayed);
+    const kLoser = calculateKFactor(loser.gamesPlayed);
+    
+    const expectedWinner = calculateExpectedScore(winner.eloRating, loser.eloRating);
+    const expectedLoser = calculateExpectedScore(loser.eloRating, winner.eloRating);
+    
+    // Update Ratings
+    winner.eloRating = Math.round(winner.eloRating + kWinner * (1 - expectedWinner));
+    loser.eloRating = Math.round(loser.eloRating + kLoser * (0 - expectedLoser));
+    
+    // Update Spieleanzahl
+    winner.gamesPlayed += 1;
+    loser.gamesPlayed += 1;
+}
+
+// Funktion zum Zurücksetzen und Neuberechnen der Elo-Ratings
+async function recalculateEloRatings() {
+    try {
+        // Setze alle Spieler auf Startwert zurück
+        await Player.updateMany({}, { 
+            eloRating: 1000,
+            gamesPlayed: 0
+        });
+        
+        // Hole alle Spiele chronologisch sortiert
+        const games = await Game.find().sort({ date: 1 });
+        
+        // Berechne Elo für jedes Spiel neu
+        for (const game of games) {
+            const winner = await Player.findOne({ name: game.winner });
+            const loser = await Player.findOne({ name: game.loser });
+            
+            if (winner && loser) {
+                updateEloRatings(winner, loser);
+                await winner.save();
+                await loser.save();
+            }
+        }
+        
+        console.log('Elo-Ratings wurden neu berechnet');
+    } catch (error) {
+        console.error('Fehler beim Neuberechnen der Elo-Ratings:', error);
+    }
+}
+
 // API Routes
 // Spieler abrufen
 app.get('/api/players', async (req, res) => {
     try {
-        const players = await Player.find({ name: { $ne: 'Yannik Erhardt' } });
-        res.json(players);
+        const players = await Player.find();
+        const games = await Game.find();
+        
+        // Berechne Statistiken für jeden Spieler
+        const playerStats = players.map(player => {
+            const playerGames = games.filter(game => 
+                game.winner === player.name || game.loser === player.name
+            );
+            
+            const wins = playerGames.filter(game => game.winner === player.name).length;
+            const losses = playerGames.filter(game => game.loser === player.name).length;
+            const totalGames = wins + losses;
+            const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : '0';
+            
+            return {
+                ...player.toObject(),
+                wins,
+                losses,
+                winRate
+            };
+        }); // Entferne den Filter für Spieler mit mindestens einem Spiel
+        
+        res.json(playerStats);
     } catch (error) {
         res.status(500).json({ error: 'Fehler beim Laden der Spieler' });
     }
@@ -127,11 +209,6 @@ async function calculateRankings() {
             }
         });
         
-        // Nur Spieler mit mindestens einem Spiel berücksichtigen
-        if (playerGames.length === 0) {
-            return null;
-        }
-        
         let wins = 0;
         let losses = 0;
         
@@ -157,16 +234,22 @@ async function calculateRankings() {
             name: player.name,
             wins,
             totalGames,
-            winRate
+            winRate,
+            eloRating: player.eloRating
         };
-    }).filter(Boolean); // Entferne null Einträge (Spieler ohne Spiele)
+    });
     
     // Sortiere nach:
-    // 1. Anzahl der Siege (absteigend)
-    // 2. Anzahl der Spiele (aufsteigend)
-    // 3. Siegesquote (absteigend)
+    // 1. Elo-Rating (absteigend)
+    // 2. Anzahl der Siege (absteigend)
+    // 3. Anzahl der Spiele (aufsteigend)
+    // 4. Siegesquote (absteigend)
     const sortedPlayers = playerStats.sort((a, b) => {
-        // Zuerst nach Siegen
+        // Zuerst nach Elo-Rating
+        if (b.eloRating !== a.eloRating) {
+            return b.eloRating - a.eloRating;
+        }
+        // Dann nach Siegen
         if (b.wins !== a.wins) {
             return b.wins - a.wins;
         }
@@ -187,86 +270,75 @@ async function calculateRankings() {
     return rankings;
 }
 
-// Neues Spiel hinzufügen
+// Spiel speichern
 app.post('/api/games', async (req, res) => {
     try {
-        // Überprüfe auf doppelte Spiele in den letzten 5 Sekunden
-        const recentGames = await Game.find({
-            winner: req.body.winner,
-            loser: req.body.loser,
-            date: { $gte: new Date(Date.now() - 5000) } // Spiele der letzten 5 Sekunden
+        const { winner, loser, format } = req.body;
+        
+        // Finde die Spieler
+        const winnerPlayer = await Player.findOne({ name: winner });
+        const loserPlayer = await Player.findOne({ name: loser });
+        
+        if (!winnerPlayer || !loserPlayer) {
+            return res.status(404).json({ error: 'Spieler nicht gefunden' });
+            }
+        
+        // Erstelle das Spiel
+        const game = new Game({
+            winner,
+            loser,
+            format
         });
 
-        if (recentGames.length > 0) {
-            return res.status(400).json({ 
-                message: 'Dieses Spiel wurde bereits vor kurzem eingetragen. Bitte warten Sie einen Moment.' 
-            });
-        }
-
-        // Hole aktuelle Rangliste vor dem Spiel
-        const oldRankings = await calculateRankings();
-        
-        // Validiere das Spiel
-        if (req.body.isMultiplayer) {
-            if (!req.body.players || req.body.players.length < 2 || req.body.players.length > 4) {
-                return res.status(400).json({ message: 'Multiplayer-Spiele müssen zwischen 2 und 4 Spielern stattfinden.' });
-            }
-        } else {
-            if (!req.body.winner || !req.body.loser) {
-                return res.status(400).json({ message: '1:1 Spiele benötigen einen Gewinner und einen Verlierer.' });
-            }
-        }
-        
-        const game = new Game(req.body);
-        await game.save();
-
-        // Berechne neue Rangliste nach dem Spiel
-        const newRankings = await calculateRankings();
-        
-        // Berechne Rangveränderungen
-        const winnerOldRank = oldRankings[game.winner];
-        const winnerNewRank = newRankings[game.winner];
-        const winnerChange = winnerOldRank - winnerNewRank;
-        
-        const loserOldRank = oldRankings[game.loser];
-        const loserNewRank = newRankings[game.loser];
-        const loserChange = loserOldRank - loserNewRank;
-        
-        // Formatiere Rangveränderungen für Slack
-        const formatRankChange = (change) => {
-            if (change > 0) {
-                return `+${change}`;
-            } else if (change < 0) {
-                return `${change}`;
-            }
-            return '±0';
-        };
-
-        console.log('Spiel wurde gespeichert:', game);
-        console.log('Versuche Slack-Nachricht zu senden...');
-        console.log('Slack Token:', process.env.SLACK_TOKEN ? 'Vorhanden' : 'Fehlt');
-        console.log('Slack Channel:', process.env.SLACK_CHANNEL);
-
-        // Slack-Nachricht senden
+        // Sende Slack-Nachricht
         try {
-            const result = await slack.chat.postMessage({
+            // Berechne die alten Rankings
+            const oldRankings = await calculateRankings();
+            const winnerOldRank = oldRankings[winner];
+            const loserOldRank = oldRankings[loser];
+            
+            // Update Elo Ratings
+            updateEloRatings(winnerPlayer, loserPlayer);
+            
+            // Speichere die aktualisierten Spieler
+            await winnerPlayer.save();
+            await loserPlayer.save();
+            
+            // Speichere das Spiel
+            await game.save();
+            
+            // Berechne die neuen Rankings
+            const newRankings = await calculateRankings();
+            const winnerNewRank = newRankings[winner];
+            const loserNewRank = newRankings[loser];
+            
+            // Berechne die Rangänderungen
+            const winnerRankChange = winnerOldRank - winnerNewRank; // Positiv = Verbesserung
+            const loserRankChange = loserOldRank - loserNewRank; // Negativ = Verschlechterung
+            
+            // Formatiere die Rangänderungen
+            const formatRankChange = (change) => {
+                if (change === 0) return '±0';
+                const sign = change > 0 ? '+' : '-';
+                const emoji = change > 0 ? ':ladder:' : ':playground_slide:';
+                return `${sign}${Math.abs(change)} ${emoji}`;
+            };
+            
+            const message = `${winner} (Rang: ${winnerNewRank} | ${formatRankChange(winnerRankChange)}) hat gegen ${loser} (Rang: ${loserNewRank} | ${formatRankChange(loserRankChange)}) gewonnen! :dart:`;
+            console.log('Sende Slack-Nachricht:', message);
+            
+            await slack.chat.postMessage({
                 channel: process.env.SLACK_CHANNEL,
-                text: `${game.winner} (Rang ${winnerNewRank} | ${formatRankChange(winnerChange)}) hat gegen ${game.loser} (Rang ${loserNewRank} | ${formatRankChange(loserChange)}) das Dartspiel gewonnen! 🎯`
+                text: message
             });
-            console.log('Slack-Nachricht erfolgreich gesendet:', result);
         } catch (slackError) {
             console.error('Fehler beim Senden der Slack-Nachricht:', slackError);
-            console.error('Slack Error Details:', {
-                error: slackError.message,
-                data: slackError.data,
-                code: slackError.code
-            });
         }
 
         res.status(201).json(game);
     } catch (error) {
         console.error('Fehler beim Speichern des Spiels:', error);
-        res.status(500).json({ error: 'Interner Serverfehler' });
+        res.status(500).json({ error: 'Fehler beim Speichern des Spiels' });
     }
 });
 
@@ -275,6 +347,9 @@ app.get('/api/stats', async (req, res) => {
     try {
         const players = await Player.find();
         const games = await Game.find();
+        
+        // Berechne die Rangliste für alle Spieler
+        const rankings = await calculateRankings();
         
         const stats = players.map(player => {
             // Filtere Spiele, an denen der Spieler beteiligt war
@@ -285,11 +360,6 @@ app.get('/api/stats', async (req, res) => {
                     return game.winner === player.name || game.loser === player.name;
                 }
             });
-            
-            // Nur Spieler mit mindestens einem Spiel zurückgeben
-            if (playerGames.length === 0) {
-                return null;
-            }
             
             // Berechne Siege und Niederlagen
             let wins = 0;
@@ -345,9 +415,10 @@ app.get('/api/stats', async (req, res) => {
                 wins,
                 losses,
                 winRate,
-                headToHead
+                headToHead,
+                rank: rankings[player.name] || 0 // Füge den Rang hinzu
             };
-        }).filter(Boolean); // Entferne null Einträge (Spieler ohne Spiele)
+        });
         
         // Sortiere die Statistiken nach:
         // 1. Anzahl der Siege (absteigend)
@@ -369,6 +440,16 @@ app.get('/api/stats', async (req, res) => {
         res.json(stats);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+});
+
+// API Route zum Neuberechnen der Elo-Ratings
+app.post('/api/recalculate-elo', async (req, res) => {
+    try {
+        await recalculateEloRatings();
+        res.json({ message: 'Elo-Ratings wurden neu berechnet' });
+    } catch (error) {
+        res.status(500).json({ error: 'Fehler beim Neuberechnen der Elo-Ratings' });
     }
 });
 

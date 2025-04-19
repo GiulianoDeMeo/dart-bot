@@ -654,4 +654,142 @@ button:hover {
 
 .top-players-table tr:hover .player-link {
     color: #0073b1;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .top-players-table {
+        font-size: 14px;
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    
+    .top-players-table th,
+    .top-players-table td {
+        padding: 8px 0;
+    }
+    
+    .top-players-table th:first-child,
+    .top-players-table td:first-child {
+        padding-right: 0;
+        width: 8px;
+        text-align: left;
+    }
+    
+    .top-players-table th:nth-child(2),
+    .top-players-table td:nth-child(2) {
+        padding-left: 2px;
+        padding-right: 0;
+        text-align: left;
+    }
+    
+    .top-players-table th:nth-child(3),
+    .top-players-table td:nth-child(3) {
+        display: table-cell;
+    }
+    
+    .elo-rating {
+        display: table-cell;
+        font-weight: bold;
+    }
+    
+    .game-form {
+        padding: 15px;
+    }
+    
+    .player-selection {
+        flex-direction: column;
+    }
+    
+    .player-select-container {
+        margin-bottom: 15px;
+    }
+    
+    button {
+        padding: 10px;
+    }
+}
+
+.elo-rating {
+    color: var(--pickware-blue);
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.top-players-table th {
+    color: var(--text-dark);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--text-dark);
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .top-players-table {
+        font-size: 14px;
+    }
+    
+    .top-players-table th,
+    .top-players-table td {
+        padding: 8px;
+    }
+    
+    .top-players-table th:first-child,
+    .top-players-table td:first-child {
+        padding-right: 2px;
+        width: 10px;
+    }
+    
+    .top-players-table th:nth-child(2),
+    .top-players-table td:nth-child(2) {
+        padding-left: 2px;
+    }
+    
+    .top-players-table th:nth-child(3),
+    .top-players-table td:nth-child(3) {
+        display: table-cell;
+    }
+    
+    .elo-rating {
+        display: table-cell;
+        font-weight: bold;
+    }
+    
+    .game-form {
+        padding: 15px;
+    }
+    
+    .player-selection {
+        flex-direction: column;
+    }
+    
+    .player-select-container {
+        margin-bottom: 15px;
+    }
+    
+    button {
+        padding: 10px;
+    }
+}
+
+.top-players-table th:nth-child(3),
+.top-players-table td:nth-child(3),
+.top-players-table th:nth-child(4),
+.top-players-table td:nth-child(4),
+.top-players-table th:nth-child(5),
+.top-players-table td:nth-child(5),
+.top-players-table th:nth-child(6),
+.top-players-table td:nth-child(6),
+.top-players-table th:nth-child(7),
+.top-players-table td:nth-child(7) {
+    text-align: center;
 } 

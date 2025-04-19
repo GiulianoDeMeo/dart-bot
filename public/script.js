@@ -29,8 +29,8 @@ let selectedLoser = null;
 let isSubmitting = false; // Globale Variable für die Sperre
 
 // API URL - Nutze die lokale URL für Entwicklung
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api'
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '192.168.2.107'
+    ? `http://${window.location.hostname}:3000/api`
     : 'https://dart-bot-stats-40bf895a4f48.herokuapp.com/api';
 
 // Lade initiale Daten
@@ -39,7 +39,6 @@ async function loadInitialData() {
         await loadPlayers();
         await loadGames();
         await loadStats();
-        updateTopPlayers();
         setupPlayerSelection();
         setupPlayerStatsSelection();
     } catch (error) {
@@ -138,79 +137,96 @@ async function populatePlayerSelects() {
 
 // Aktualisiere die Top 10 Spieler
 function updateTopPlayers() {
-    console.log('Aktualisiere Top 10 Spieler');
-    console.log('Verfügbare Statistiken:', stats);
+    const tableBody = document.getElementById('top-players-table-body');
+    tableBody.innerHTML = '';
 
-    // Verwende direkt die vom Backend geladenen Statistiken
-    const sortedPlayers = [...stats].sort((a, b) => {
-        // Zuerst nach Siegen
-        if (b.wins !== a.wins) {
-            return b.wins - a.wins;
+    // Berechne die Elo-Verbesserung für die aktuelle Woche
+    const currentDate = new Date();
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Sonntag als Wochenanfang
+    
+    // Erstelle ein Mapping von Spielernamen zu ihren Elo-Werten am Wochenanfang
+    const startOfWeekElo = {};
+    games.forEach(game => {
+        const gameDate = new Date(game.date);
+        if (gameDate < startOfWeek) {
+            // Speichere die letzte bekannte Elo vor Wochenanfang
+            startOfWeekElo[game.winner] = game.winnerElo || 1000;
+            startOfWeekElo[game.loser] = game.loserElo || 1000;
         }
-        // Dann nach Anzahl der Spiele (weniger ist besser)
-        if (a.games !== b.games) {
-            return a.games - b.games;
-        }
-        // Zuletzt nach Siegesquote
-        return parseFloat(b.winRate) - parseFloat(a.winRate);
     });
 
-    console.log('Sortierte Spieler:', sortedPlayers);
+    // Berechne die Elo-Verbesserung für jeden Spieler
+    const weeklyEloImprovements = {};
+    players.forEach(player => {
+        const startElo = startOfWeekElo[player.name] || 1000; // Standard-Start-ELO wenn nicht gefunden
+        weeklyEloImprovements[player.name] = player.eloRating - startElo;
+    });
 
-    // Zeige nur die Top 10 Spieler an
-    const top10Players = sortedPlayers.slice(0, 10);
+    // Finde den Spieler mit der größten Elo-Verbesserung
+    let bestWeeklyPlayer = null;
+    let maxImprovement = -Infinity;
+    Object.entries(weeklyEloImprovements).forEach(([player, improvement]) => {
+        if (improvement > maxImprovement) {
+            maxImprovement = improvement;
+            bestWeeklyPlayer = player;
+        }
+    });
+
+    // Filtere Spieler mit mindestens einem Spiel und sortiere nach Elo-Rating
+    const activePlayers = players
+        .filter(player => player.gamesPlayed > 0)
+        .sort((a, b) => b.eloRating - a.eloRating)
+        .slice(0, 10); // Nur Top 10
     
-    if (!topPlayersContainer) {
-        console.error('Top players container nicht gefunden');
-        return;
+    activePlayers.forEach((player, index) => {
+        const row = document.createElement('tr');
+        let playerName = player.name;
+
+        // Füge Emojis für die Top 3 hinzu
+        if (index === 0) playerName += ' 🏆';
+        else if (index === 1) playerName += ' 🥈';
+        else if (index === 2) playerName += ' 🥉';
+        
+        // Füge die Krone für den besten Spieler der Woche hinzu
+        if (player.name === bestWeeklyPlayer) {
+            playerName += ' 👑';
+        }
+        
+        row.innerHTML = `
+            <td>#${index + 1}</td>
+            <td>${playerName}</td>
+            <td class="elo-rating">${player.eloRating}</td>
+            <td>${player.gamesPlayed}</td>
+            <td>${player.wins}</td>
+            <td>${player.losses}</td>
+            <td>${player.winRate}%</td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    // Füge die Legende hinzu
+    const legendContainer = document.createElement('div');
+    legendContainer.style.textAlign = 'center';
+    legendContainer.style.marginTop = '20px';
+    legendContainer.style.padding = '10px';
+    legendContainer.style.backgroundColor = '#f5f5f5';
+    legendContainer.style.borderRadius = '5px';
+    legendContainer.innerHTML = `
+        <p style="margin: 0; font-size: 14px; color: #666;">
+            👑 Spieler der Woche
+        </p>
+    `;
+    
+    // Entferne die alte Legende, falls vorhanden
+    const oldLegend = document.getElementById('top-players-legend');
+    if (oldLegend) {
+        oldLegend.remove();
     }
     
-    topPlayersContainer.innerHTML = `
-        <table class="top-players-table">
-            <thead>
-                <tr>
-                    <th>Rang</th>
-                    <th>Spieler</th>
-                    <th>Siegesquote</th>
-                    <th>Spiele</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${top10Players.map((player, index) => `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td><span class="player-link" data-player="${player.name}">${player.name}</span></td>
-                        <td>${player.winRate}%</td>
-                        <td>${player.games} (${player.wins}S ${player.losses}N)</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-
-    // Füge Event Listener für die Spielerlinks hinzu
-    document.querySelectorAll('.player-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const playerName = link.dataset.player;
-            
-            // Wechsle zur Einzelspieler-Ansicht
-            statsViewSelect.value = 'player';
-            
-            // Aktualisiere die Ansicht
-            document.querySelectorAll('.stats-content').forEach(container => {
-                container.style.display = 'none';
-                container.classList.remove('active');
-            });
-            
-            top10Container.style.display = 'none';
-            playerStatsContainer.style.display = 'block';
-            setTimeout(() => playerStatsContainer.classList.add('active'), 10);
-            
-            // Zeige die Statistiken des ausgewählten Spielers
-            showPlayerStats(playerName);
-        });
-    });
+    // Füge die neue Legende hinzu
+    legendContainer.id = 'top-players-legend';
+    tableBody.parentElement.parentElement.appendChild(legendContainer);
 }
 
 // Zeige Stats für einen Spieler an
@@ -258,6 +274,14 @@ function showPlayerStats(playerName) {
             <h3>Allgemeine Statistiken</h3>
             <div class="stats-cards">
                 <div class="stat-card">
+                    <div class="stat-value">#${playerStats.rank}</div>
+                    <div class="stat-label">Rang</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${playerStats.eloRating}</div>
+                    <div class="stat-label">Elo-Wertung</div>
+                </div>
+                <div class="stat-card">
                     <div class="stat-value">${playerStats.games}</div>
                     <div class="stat-label">Spiele</div>
                 </div>
@@ -293,7 +317,6 @@ function showSuggestions(searchInput, dropdown, players, onSelect) {
             .map(player => `
                 <div class="search-item" data-name="${player.name}">
                     <span class="player-name">${player.name}</span>
-                    <span class="player-nickname">${player.nickname || ''}</span>
                 </div>
             `).join('');
         
@@ -324,14 +347,14 @@ function setupPlayerSelection() {
 
     // Event Listener für Sucheingaben
     winnerSearch.addEventListener('input', () => {
-        showSuggestions(winnerSearch, winnerDropdown, players, (player) => {
+        showSuggestions(winnerSearch, winnerDropdown, stats, (player) => {
             selectedWinner = player;
             winnerSearch.value = player.name;
         });
     });
 
     loserSearch.addEventListener('input', () => {
-        showSuggestions(loserSearch, loserDropdown, players, (player) => {
+        showSuggestions(loserSearch, loserDropdown, stats, (player) => {
             selectedLoser = player;
             loserSearch.value = player.name;
         });
@@ -430,7 +453,7 @@ function setupPlayerStatsSelection() {
     // Event Listener für Sucheingaben
     playerStatsSearch.addEventListener('input', () => {
         const searchText = playerStatsSearch.value.toLowerCase();
-        const matches = players.filter(player => 
+        const matches = stats.filter(player => 
             player.name.toLowerCase().includes(searchText)
         );
 
@@ -528,8 +551,8 @@ refreshButton.addEventListener('click', async () => {
 });
 
 // Lade die initialen Daten beim Start
-loadInitialData();
-
-// Zeige standardmäßig die Top 10 an
-statsViewSelect.value = 'top10';
-statsViewSelect.dispatchEvent(new Event('change')); 
+loadInitialData().then(() => {
+    // Zeige standardmäßig die Top 10 an
+    statsViewSelect.value = 'top10';
+    statsViewSelect.dispatchEvent(new Event('change'));
+}); 
