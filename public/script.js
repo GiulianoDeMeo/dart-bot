@@ -9,17 +9,15 @@ const statsViewSelect = document.getElementById('stats-view-select');
 const refreshButton = document.getElementById('refresh-stats');
 const top10Container = document.getElementById('top10-container');
 const playerStatsContainer = document.getElementById('player-stats-container');
-const topPlayersContainer = document.getElementById('top-players-container');
 
 // Überprüfe, ob alle erforderlichen DOM-Elemente vorhanden sind
-if (!submitButton || !statsViewSelect || !refreshButton || !top10Container || !playerStatsContainer || !topPlayersContainer) {
+if (!submitButton || !statsViewSelect || !refreshButton || !top10Container || !playerStatsContainer) {
     console.error('Erforderliche DOM-Elemente nicht gefunden:', {
         submitButton: !!submitButton,
         statsViewSelect: !!statsViewSelect,
         refreshButton: !!refreshButton,
         top10Container: !!top10Container,
-        playerStatsContainer: !!playerStatsContainer,
-        topPlayersContainer: !!topPlayersContainer
+        playerStatsContainer: !!playerStatsContainer
     });
 }
 

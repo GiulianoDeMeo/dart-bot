@@ -240,25 +240,39 @@ async function calculateRankings() {
     });
     
     // Sortiere nach:
-    // 1. Elo-Rating (absteigend)
-    // 2. Anzahl der Siege (absteigend)
-    // 3. Anzahl der Spiele (aufsteigend)
-    // 4. Siegesquote (absteigend)
+    // 1. Spielerfahrung (Spieler mit mindestens einem Spiel kommen nach vorne)
+    // 2. Elo-Rating (absteigend)
+    // 3. Anzahl der Siege (absteigend)
+    // 4. Anzahl der Spiele (aufsteigend)
+    // 5. Siegesquote (absteigend)
     const sortedPlayers = playerStats.sort((a, b) => {
-        // Zuerst nach Elo-Rating
-        if (b.eloRating !== a.eloRating) {
-            return b.eloRating - a.eloRating;
+        // Zuerst nach Spielerfahrung
+        const aHasGames = a.totalGames > 0;
+        const bHasGames = b.totalGames > 0;
+        
+        if (aHasGames !== bHasGames) {
+            return bHasGames - aHasGames; // Spieler mit Spielen kommen nach vorne
         }
-        // Dann nach Siegen
-        if (b.wins !== a.wins) {
-            return b.wins - a.wins;
+        
+        // Wenn beide Spieler Spiele haben, nach Elo sortieren
+        if (aHasGames && bHasGames) {
+            if (b.eloRating !== a.eloRating) {
+                return b.eloRating - a.eloRating;
+            }
+            // Bei gleichem Elo nach Siegen
+            if (b.wins !== a.wins) {
+                return b.wins - a.wins;
+            }
+            // Bei gleichen Siegen nach Anzahl der Spiele (weniger ist besser)
+            if (a.totalGames !== b.totalGames) {
+                return a.totalGames - b.totalGames;
+            }
+            // Zuletzt nach Siegesquote
+            return b.winRate - a.winRate;
         }
-        // Dann nach Anzahl der Spiele (weniger ist besser)
-        if (a.totalGames !== b.totalGames) {
-            return a.totalGames - b.totalGames;
-        }
-        // Zuletzt nach Siegesquote
-        return b.winRate - a.winRate;
+        
+        // Wenn beide keine Spiele haben, alphabetisch sortieren
+        return a.name.localeCompare(b.name);
     });
     
     // Erstelle ein Mapping von Spielername zu Rang
