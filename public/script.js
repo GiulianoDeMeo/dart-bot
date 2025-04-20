@@ -195,7 +195,7 @@ function updateTopPlayers() {
         
         row.innerHTML = `
             <td>#${index + 1}</td>
-            <td>${playerName}</td>
+            <td><a href="#" class="player-link" data-player="${player.name}">${playerName}</a></td>
             <td class="elo-rating">${player.eloRating}</td>
             <td>${player.gamesPlayed}</td>
             <td>${player.wins}</td>
@@ -203,6 +203,23 @@ function updateTopPlayers() {
             <td>${player.winRate}%</td>
         `;
         tableBody.appendChild(row);
+    });
+
+    // Füge Event-Listener für die Spielerlinks hinzu
+    tableBody.querySelectorAll('.player-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const playerName = link.dataset.player;
+            
+            // Wechsle zur Einzelspieler-Ansicht
+            statsViewSelect.value = 'player';
+            top10Container.style.display = 'none';
+            playerStatsContainer.style.display = 'block';
+            playerStatsContainer.classList.add('active');
+            
+            // Zeige die Statistiken des ausgewählten Spielers
+            showPlayerStats(playerName);
+        });
     });
 
     // Füge die Legende hinzu

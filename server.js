@@ -35,7 +35,7 @@ mongoose.connect(process.env.MONGODB_URI, {
         message: err.message,
         code: err.code
     });
-    process.exit(1); // Beende den Server bei Verbindungsfehler
+    process.exit(1);
 });
 
 // Weitere Verbindungs-Event-Handler
