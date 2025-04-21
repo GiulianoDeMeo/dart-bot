@@ -199,92 +199,93 @@ app.get('/api/games', async (req, res) => {
 
 // Hilfsfunktion zur Berechnung der Rangliste
 async function calculateRankings() {
-    const players = await Player.find();
-    const games = await Game.find();
-    
-    // Berechne Statistiken für jeden Spieler
-    const playerStats = players.map(player => {
-        const playerGames = games.filter(game => {
-            if (game.isMultiplayer) {
-                return game.players.includes(player.name);
-            } else {
-                return game.winner === player.name || game.loser === player.name;
-            }
-        });
+    try {
+        const players = await Player.find();
+        const games = await Game.find();
         
-        let wins = 0;
-        let losses = 0;
-        
-        playerGames.forEach(game => {
-            if (game.isMultiplayer) {
-                // Bei Multiplayer-Spielen zählen wir nur die Teilnahme
-                wins += 0;
-                losses += 1;
-            } else {
-                // Bei 1:1 Spielen
-                if (game.winner === player.name) {
-                    wins += 1;
-                } else if (game.loser === player.name) {
-                    losses += 1;
+        // Berechne Statistiken für jeden Spieler
+        const playerStats = players.map(player => {
+            const playerGames = games.filter(game => {
+                if (game.isMultiplayer) {
+                    return game.players.includes(player.name);
+                } else {
+                    return game.winner === player.name || game.loser === player.name;
                 }
-            }
+            });
+            
+            let wins = 0;
+            let losses = 0;
+            
+            playerGames.forEach(game => {
+                if (game.isMultiplayer) {
+                    // Bei Multiplayer-Spielen zählen wir nur die Teilnahme
+                    wins += 0;
+                    losses += 1;
+                } else {
+                    // Bei 1:1 Spielen
+                    if (game.winner === player.name) {
+                        wins += 1;
+                    } else if (game.loser === player.name) {
+                        losses += 1;
+                    }
+                }
+            });
+            
+            const totalGames = playerGames.length;
+            const winRate = totalGames > 0 ? (wins / totalGames) : 0;
+            
+            return {
+                name: player.name,
+                wins,
+                totalGames,
+                winRate,
+                eloRating: player.eloRating || 1000, // Fallback auf 1000 wenn nicht gesetzt
+                gamesPlayed: player.gamesPlayed || 0  // Fallback auf 0 wenn nicht gesetzt
+            };
         });
         
-        const totalGames = playerGames.length;
-        const winRate = totalGames > 0 ? (wins / totalGames) : 0;
-        
-        return {
-            name: player.name,
-            wins,
-            totalGames,
-            winRate,
-            eloRating: player.eloRating
-        };
-    });
-    
-    // Sortiere nach:
-    // 1. Spielerfahrung (Spieler mit mindestens einem Spiel kommen nach vorne)
-    // 2. Elo-Rating (absteigend)
-    // 3. Anzahl der Siege (absteigend)
-    // 4. Anzahl der Spiele (aufsteigend)
-    // 5. Siegesquote (absteigend)
-    const sortedPlayers = playerStats.sort((a, b) => {
-        // Zuerst nach Spielerfahrung
-        const aHasGames = a.totalGames > 0;
-        const bHasGames = b.totalGames > 0;
-        
-        if (aHasGames !== bHasGames) {
-            return bHasGames - aHasGames; // Spieler mit Spielen kommen nach vorne
-        }
-        
-        // Wenn beide Spieler Spiele haben, nach Elo sortieren
-        if (aHasGames && bHasGames) {
-            if (b.eloRating !== a.eloRating) {
-                return b.eloRating - a.eloRating;
+        // Sortiere nach:
+        // 1. Spieler mit Spielen kommen zuerst
+        // 2. Elo-Rating (absteigend)
+        // 3. Anzahl der Siege (absteigend)
+        // 4. Siegesquote (absteigend)
+        const sortedPlayers = playerStats.sort((a, b) => {
+            // Zuerst nach Spielerfahrung
+            const aHasGames = a.totalGames > 0;
+            const bHasGames = b.totalGames > 0;
+            
+            if (aHasGames !== bHasGames) {
+                return bHasGames - aHasGames; // Spieler mit Spielen kommen nach vorne
             }
-            // Bei gleichem Elo nach Siegen
-            if (b.wins !== a.wins) {
-                return b.wins - a.wins;
+            
+            // Wenn beide Spieler Spiele haben, nach Elo sortieren
+            if (aHasGames && bHasGames) {
+                if (b.eloRating !== a.eloRating) {
+                    return b.eloRating - a.eloRating;
+                }
+                // Bei gleichem Elo nach Siegen
+                if (b.wins !== a.wins) {
+                    return b.wins - a.wins;
+                }
+                // Bei gleichen Siegen nach Siegesquote
+                return b.winRate - a.winRate;
             }
-            // Bei gleichen Siegen nach Anzahl der Spiele (weniger ist besser)
-            if (a.totalGames !== b.totalGames) {
-                return a.totalGames - b.totalGames;
-            }
-            // Zuletzt nach Siegesquote
-            return b.winRate - a.winRate;
-        }
+            
+            // Wenn beide keine Spiele haben, nach Elo sortieren
+            return b.eloRating - a.eloRating;
+        });
         
-        // Wenn beide keine Spiele haben, alphabetisch sortieren
-        return a.name.localeCompare(b.name);
-    });
-    
-    // Erstelle ein Mapping von Spielername zu Rang
-    const rankings = {};
-    sortedPlayers.forEach((player, index) => {
-        rankings[player.name] = index + 1;
-    });
-    
-    return rankings;
+        // Erstelle ein Mapping von Spielername zu Rang
+        const rankings = {};
+        sortedPlayers.forEach((player, index) => {
+            rankings[player.name] = index + 1;
+        });
+        
+        return rankings;
+    } catch (error) {
+        console.error('Fehler bei der Berechnung der Rangliste:', error);
+        return {};
+    }
 }
 
 // Spiel speichern
