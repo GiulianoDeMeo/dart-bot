@@ -486,32 +486,51 @@ app.post('/api/recalculate-elo', async (req, res) => {
 // Migriere Elo-Historie für bestehende Spieler
 app.post('/api/migrate-elo-history', async (req, res) => {
     try {
-        const players = await Player.find();
         const games = await Game.find().sort({ date: 1 });
+        const players = await Player.find();
         
-        // Setze alle Spieler auf Startwert zurück
-        await Player.updateMany({}, { 
-            eloRating: 1000,
-            gamesPlayed: 0,
-            eloHistory: [{ date: new Date(0), elo: 1000 }]
+        // Erstelle ein Mapping von Spieler-IDs zu Elo-Historien
+        const eloHistoryMap = new Map();
+        
+        // Initialisiere die Elo-Historie für jeden Spieler
+        players.forEach(player => {
+            eloHistoryMap.set(player._id.toString(), []);
         });
         
-        // Berechne Elo für jedes Spiel neu
+        // Verarbeite jedes Spiel chronologisch
         for (const game of games) {
-            const winner = await Player.findOne({ name: game.winner });
-            const loser = await Player.findOne({ name: game.loser });
+            const winner = game.winner;
+            const loser = game.loser;
             
-            if (winner && loser) {
-                updateEloRatings(winner, loser);
-                await winner.save();
-                await loser.save();
+            // Füge Elo-Einträge für beide Spieler hinzu
+            if (winner) {
+                const winnerHistory = eloHistoryMap.get(winner._id.toString()) || [];
+                winnerHistory.push({
+                    elo: winner.elo,
+                    date: game.date // Verwende das Spiel-Datum
+                });
+                eloHistoryMap.set(winner._id.toString(), winnerHistory);
             }
+            
+            if (loser) {
+                const loserHistory = eloHistoryMap.get(loser._id.toString()) || [];
+                loserHistory.push({
+                    elo: loser.elo,
+                    date: game.date // Verwende das Spiel-Datum
+                });
+                eloHistoryMap.set(loser._id.toString(), loserHistory);
+            }
+        }
+        
+        // Aktualisiere die Spieler mit ihren Elo-Historien
+        for (const [playerId, history] of eloHistoryMap.entries()) {
+            await Player.findByIdAndUpdate(playerId, { eloHistory: history });
         }
         
         res.json({ message: 'Elo-Historie wurde erfolgreich migriert' });
     } catch (error) {
-        console.error('Fehler beim Migrieren der Elo-Historie:', error);
-        res.status(500).json({ error: 'Fehler beim Migrieren der Elo-Historie' });
+        console.error('Fehler bei der Migration der Elo-Historie:', error);
+        res.status(500).json({ error: 'Interner Serverfehler' });
     }
 });
 
