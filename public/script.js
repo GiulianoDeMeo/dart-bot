@@ -170,30 +170,33 @@ function updateTopPlayers() {
 
     // Berechne die Elo-Verbesserung nur für Spieler, die in dieser Woche gespielt haben
     const weeklyEloImprovements = {};
+    const playersInWeeklyGames = new Set();
+    
+    // Sammle alle Spieler, die diese Woche gespielt haben
     weeklyGames.forEach(game => {
-        const winner = game.winner;
-        const loser = game.loser;
-        const startEloWinner = startOfWeekElo[winner] || 1000;
-        const startEloLoser = startOfWeekElo[loser] || 1000;
+        playersInWeeklyGames.add(game.winner);
+        playersInWeeklyGames.add(game.loser);
+    });
+    
+    // Berechne die Elo-Verbesserung für jeden Spieler
+    playersInWeeklyGames.forEach(playerName => {
+        const player = players.find(p => p.name === playerName);
+        if (!player) return;
         
-        // Finde die aktuellen Elo-Werte der Spieler
-        const winnerPlayer = players.find(p => p.name === winner);
-        const loserPlayer = players.find(p => p.name === loser);
+        // Finde den aktuellen Elo-Wert
+        const currentElo = player.eloRating;
         
-        const currentEloWinner = winnerPlayer ? winnerPlayer.elo : 1000;
-        const currentEloLoser = loserPlayer ? loserPlayer.elo : 1000;
+        // Finde den Start-Elo dieser Woche
+        const startElo = startOfWeekElo[playerName] || 1000;
         
-        // Aktualisiere die Elo-Verbesserung nur für Spieler, die in dieser Woche gespielt haben
-        if (!weeklyEloImprovements[winner]) weeklyEloImprovements[winner] = 0;
-        if (!weeklyEloImprovements[loser]) weeklyEloImprovements[loser] = 0;
-        
-        weeklyEloImprovements[winner] += currentEloWinner - startEloWinner;
-        weeklyEloImprovements[loser] += currentEloLoser - startEloLoser;
+        // Berechne die Verbesserung
+        weeklyEloImprovements[playerName] = currentElo - startElo;
     });
 
     // Debug-Logs
-    console.log('Wochenanfang:', startOfWeek);
-    console.log('Wochenende:', endOfWeek);
+    console.log('=== Debug: Spieler der Woche ===');
+    console.log('Wochenanfang:', startOfWeek.toLocaleString());
+    console.log('Wochenende:', endOfWeek.toLocaleString());
     console.log('Anzahl Spiele in dieser Woche:', weeklyGames.length);
     console.log('Elo-Verbesserungen:', weeklyEloImprovements);
 

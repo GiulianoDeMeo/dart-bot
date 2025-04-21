@@ -21,6 +21,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://dart-bot-app:xhfbG
 
 console.log('Versuche Verbindung zur MongoDB herzustellen...');
 console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Vorhanden' : 'Fehlt');
+console.log('Umgebung:', process.env.NODE_ENV || 'production');
 
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
@@ -486,8 +487,15 @@ app.post('/api/recalculate-elo', async (req, res) => {
     }
 });
 
-// Server starten
-app.listen(PORT, () => {
-    console.log(`Server läuft auf Port ${PORT}`);
-    console.log(`http://localhost:${PORT}`);
-}); 
+// Exportiere die Funktion für die Testumgebung
+module.exports = {
+    recalculateEloRatings
+};
+
+// Server nur starten, wenn das Modul direkt ausgeführt wird
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server läuft auf Port ${PORT}`);
+        console.log(`http://localhost:${PORT}`);
+    });
+} 
