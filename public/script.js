@@ -175,6 +175,12 @@ function updateTopPlayers() {
         weeklyEloImprovements[player.name] = player.eloRating - startElo;
     });
 
+    // Debug-Logs
+    console.log('Wochenanfang:', startOfWeek);
+    console.log('Wochenende:', endOfWeek);
+    console.log('Anzahl Spiele in dieser Woche:', weeklyGames.length);
+    console.log('Elo-Verbesserungen:', weeklyEloImprovements);
+
     // Finde den Spieler mit der größten Elo-Verbesserung
     let bestWeeklyPlayer = null;
     let maxImprovement = -Infinity;
@@ -184,6 +190,8 @@ function updateTopPlayers() {
             bestWeeklyPlayer = player;
         }
     });
+
+    console.log('Bester Spieler der Woche:', bestWeeklyPlayer, 'mit Verbesserung:', maxImprovement);
 
     // Filtere Spieler mit mindestens einem Spiel und sortiere nach Elo-Rating
     const activePlayers = players
