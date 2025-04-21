@@ -185,25 +185,10 @@ function updateTopPlayers() {
     });
 
     // Debug-Logs
-    console.log('=== Spieler der Woche Debug ===');
-    console.log('Wochenanfang:', startOfWeek.toLocaleString());
-    console.log('Wochenende:', endOfWeek.toLocaleString());
+    console.log('Wochenanfang:', startOfWeek);
+    console.log('Wochenende:', endOfWeek);
     console.log('Anzahl Spiele in dieser Woche:', weeklyGames.length);
-    if (weeklyGames.length > 0) {
-        console.log('Spiele dieser Woche:', weeklyGames.map(g => `${g.winner} vs ${g.loser}`));
-    }
-    if (Object.keys(weeklyEloImprovements).length > 0) {
-        console.log('Elo-Verbesserungen:', Object.entries(weeklyEloImprovements)
-            .filter(([_, v]) => v !== 0)
-            .map(([k, v]) => `${k}: ${v}`)
-            .join(', '));
-    }
-    if (bestWeeklyPlayer) {
-        console.log('Bester Spieler der Woche:', bestWeeklyPlayer, 'mit Verbesserung:', maxImprovement);
-    } else {
-        console.log('Kein Spieler der Woche - noch keine Spiele in dieser Woche');
-    }
-    console.log('=============================');
+    console.log('Elo-Verbesserungen:', weeklyEloImprovements);
 
     // Finde den Spieler mit der größten Elo-Verbesserung
     let bestWeeklyPlayer = null;
@@ -214,6 +199,8 @@ function updateTopPlayers() {
             bestWeeklyPlayer = player;
         }
     });
+
+    console.log('Bester Spieler der Woche:', bestWeeklyPlayer, 'mit Verbesserung:', maxImprovement);
 
     // Filtere Spieler mit mindestens einem Spiel und sortiere nach Elo-Rating
     const activePlayers = players
