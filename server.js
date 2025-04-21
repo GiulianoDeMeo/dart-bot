@@ -486,47 +486,58 @@ app.post('/api/recalculate-elo', async (req, res) => {
 // Migriere Elo-Historie für bestehende Spieler
 app.post('/api/migrate-elo-history', async (req, res) => {
     try {
+        console.log('Starte Elo-Historie Migration...');
         const games = await Game.find().sort({ date: 1 }).populate('winner loser');
         const players = await Player.find();
+        
+        console.log(`Gefunden: ${games.length} Spiele und ${players.length} Spieler`);
         
         // Erstelle ein Mapping von Spieler-IDs zu Elo-Historien
         const eloHistoryMap = new Map();
         
-        // Initialisiere die Elo-Historie für jeden Spieler
+        // Initialisiere die Elo-Historie für jeden Spieler mit dem Startwert
         players.forEach(player => {
-            eloHistoryMap.set(player._id.toString(), []);
+            eloHistoryMap.set(player._id.toString(), [{
+                elo: 1000, // Startwert
+                date: new Date(0) // Anfangsdatum
+            }]);
         });
+        
+        console.log('Initialisierte Elo-Historie für alle Spieler');
         
         // Verarbeite jedes Spiel chronologisch
         for (const game of games) {
-            const winner = game.winner;
-            const loser = game.loser;
+            console.log(`Verarbeite Spiel vom ${game.date}: ${game.winner?.name} vs ${game.loser?.name}`);
             
-            // Füge Elo-Einträge für beide Spieler hinzu
-            if (winner) {
-                const winnerHistory = eloHistoryMap.get(winner._id.toString()) || [];
-                winnerHistory.push({
-                    elo: winner.eloRating,
-                    date: game.date
-                });
-                eloHistoryMap.set(winner._id.toString(), winnerHistory);
-            }
-            
-            if (loser) {
-                const loserHistory = eloHistoryMap.get(loser._id.toString()) || [];
-                loserHistory.push({
-                    elo: loser.eloRating,
-                    date: game.date
-                });
-                eloHistoryMap.set(loser._id.toString(), loserHistory);
+            if (game.winner && game.loser) {
+                const winnerHistory = eloHistoryMap.get(game.winner._id.toString());
+                const loserHistory = eloHistoryMap.get(game.loser._id.toString());
+                
+                if (winnerHistory && loserHistory) {
+                    // Füge neue Einträge hinzu
+                    winnerHistory.push({
+                        elo: game.winner.eloRating,
+                        date: game.date
+                    });
+                    
+                    loserHistory.push({
+                        elo: game.loser.eloRating,
+                        date: game.date
+                    });
+                }
             }
         }
+        
+        console.log('Alle Spiele verarbeitet, aktualisiere Spieler...');
         
         // Aktualisiere die Spieler mit ihren Elo-Historien
         for (const [playerId, history] of eloHistoryMap.entries()) {
+            const player = players.find(p => p._id.toString() === playerId);
+            console.log(`Aktualisiere ${player?.name} mit ${history.length} Einträgen`);
             await Player.findByIdAndUpdate(playerId, { eloHistory: history });
         }
         
+        console.log('Migration abgeschlossen');
         res.json({ message: 'Elo-Historie wurde erfolgreich migriert' });
     } catch (error) {
         console.error('Fehler bei der Migration der Elo-Historie:', error);
