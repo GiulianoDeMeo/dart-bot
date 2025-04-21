@@ -138,11 +138,19 @@ function updateTopPlayers() {
     const tableBody = document.getElementById('top-players-table-body');
     tableBody.innerHTML = '';
 
-    // Berechne die Elo-Verbesserung für die aktuelle Woche
+    // Berechne die Elo-Verbesserung für die aktuelle Arbeitswoche (Montag-Freitag)
     const currentDate = new Date();
     const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay()); // Sonntag als Wochenanfang
     
+    // Setze auf Montag 00:00:00
+    startOfWeek.setDate(currentDate.getDate() - ((currentDate.getDay() + 6) % 7));
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    // Setze auf Sonntag 23:59:59
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
     // Erstelle ein Mapping von Spielernamen zu ihren Elo-Werten am Wochenanfang
     const startOfWeekElo = {};
     games.forEach(game => {
@@ -152,6 +160,12 @@ function updateTopPlayers() {
             startOfWeekElo[game.winner] = game.winnerElo || 1000;
             startOfWeekElo[game.loser] = game.loserElo || 1000;
         }
+    });
+
+    // Filtere Spiele für die aktuelle Arbeitswoche
+    const weeklyGames = games.filter(game => {
+        const gameDate = new Date(game.date);
+        return gameDate >= startOfWeek && gameDate <= endOfWeek;
     });
 
     // Berechne die Elo-Verbesserung für jeden Spieler
