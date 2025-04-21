@@ -477,17 +477,18 @@ function setupPlayerSelection() {
             selectedWinner = null;
             selectedLoser = null;
 
-            // Lade die Daten neu
-            await loadGames();
-            await loadStats();
+            // Lade alle Daten neu und aktualisiere die Anzeige
+            await loadInitialData();
             
-            // Aktualisiere die Top 10 Spieler
-            updateTopPlayers();
-            
-            // Zeige die Top 10 Ansicht
-            statsViewSelect.value = 'top10';
-            top10Container.style.display = 'block';
-            playerStatsContainer.style.display = 'none';
+            // Aktualisiere die Anzeige basierend auf der aktuellen Auswahl
+            if (statsViewSelect.value === 'top10') {
+                updateTopPlayers();
+            } else if (statsViewSelect.value === 'player') {
+                const playerSelect = document.getElementById('player-select');
+                if (playerSelect) {
+                    showPlayerStats(playerSelect.value);
+                }
+            }
 
             alert('Spiel erfolgreich gespeichert!');
         } catch (error) {
