@@ -17,19 +17,22 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // MongoDB Verbindung
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://dart-bot-app:xhfbGnfII6WhJKEA@pickware.biz4mzw.mongodb.net/dart-stats';
+
 console.log('Versuche Verbindung zur MongoDB herzustellen...');
 console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Vorhanden' : 'Fehlt');
 
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => {
     console.log('MongoDB Verbindung erfolgreich hergestellt');
-    console.log('Datenbank:', mongoose.connection.name);
+    const db = mongoose.connection.db;
+    console.log('Datenbank:', db.databaseName);
     console.log('Host:', mongoose.connection.host);
-    console.log('Verbundene Datenbank:', mongoose.connection.db.databaseName);
+    console.log('Verbundene Datenbank:', db.databaseName);
 }).catch(err => {
-    console.error('MongoDB Verbindungsfehler:', err);
+    console.error('Fehler bei der MongoDB Verbindung:', err);
     console.error('Details:', {
         name: err.name,
         message: err.message,
