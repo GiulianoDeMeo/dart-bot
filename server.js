@@ -58,7 +58,11 @@ mongoose.connection.on('reconnected', () => {
 const playerSchema = new mongoose.Schema({
     name: { type: String, required: true, unique: true },
     eloRating: { type: Number, default: 1000 }, // Startwert auf 1000 geändert
-    gamesPlayed: { type: Number, default: 0 }   // Für K-Faktor Berechnung
+    gamesPlayed: { type: Number, default: 0 },   // Für K-Faktor Berechnung
+    eloHistory: [{
+        date: { type: Date, required: true },
+        elo: { type: Number, required: true }
+    }]
 });
 
 // Spiel Schema
@@ -105,6 +109,10 @@ function updateEloRatings(winner, loser) {
     const expectedWinner = calculateExpectedScore(winner.eloRating, loser.eloRating);
     const expectedLoser = calculateExpectedScore(loser.eloRating, winner.eloRating);
     
+    // Speichere die alten Elo-Werte
+    const oldWinnerElo = winner.eloRating;
+    const oldLoserElo = loser.eloRating;
+    
     // Update Ratings
     winner.eloRating = Math.round(winner.eloRating + kWinner * (1 - expectedWinner));
     loser.eloRating = Math.round(loser.eloRating + kLoser * (0 - expectedLoser));
@@ -112,6 +120,11 @@ function updateEloRatings(winner, loser) {
     // Update Spieleanzahl
     winner.gamesPlayed += 1;
     loser.gamesPlayed += 1;
+
+    // Füge die neuen Elo-Werte zur Historie hinzu
+    const now = new Date();
+    winner.eloHistory.push({ date: now, elo: winner.eloRating });
+    loser.eloHistory.push({ date: now, elo: loser.eloRating });
 }
 
 // Funktion zum Zurücksetzen und Neuberechnen der Elo-Ratings
@@ -467,6 +480,38 @@ app.post('/api/recalculate-elo', async (req, res) => {
         res.json({ message: 'Elo-Ratings wurden neu berechnet' });
     } catch (error) {
         res.status(500).json({ error: 'Fehler beim Neuberechnen der Elo-Ratings' });
+    }
+});
+
+// Migriere Elo-Historie für bestehende Spieler
+app.post('/api/migrate-elo-history', async (req, res) => {
+    try {
+        const players = await Player.find();
+        const games = await Game.find().sort({ date: 1 });
+        
+        // Setze alle Spieler auf Startwert zurück
+        await Player.updateMany({}, { 
+            eloRating: 1000,
+            gamesPlayed: 0,
+            eloHistory: [{ date: new Date(0), elo: 1000 }]
+        });
+        
+        // Berechne Elo für jedes Spiel neu
+        for (const game of games) {
+            const winner = await Player.findOne({ name: game.winner });
+            const loser = await Player.findOne({ name: game.loser });
+            
+            if (winner && loser) {
+                updateEloRatings(winner, loser);
+                await winner.save();
+                await loser.save();
+            }
+        }
+        
+        res.json({ message: 'Elo-Historie wurde erfolgreich migriert' });
+    } catch (error) {
+        console.error('Fehler beim Migrieren der Elo-Historie:', error);
+        res.status(500).json({ error: 'Fehler beim Migrieren der Elo-Historie' });
     }
 });
 
