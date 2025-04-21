@@ -338,8 +338,7 @@ app.post('/api/games', async (req, res) => {
             const formatRankChange = (change) => {
                 if (change === 0) return '±0';
                 const sign = change > 0 ? '+' : '-';
-                const emoji = change > 0 ? ':ladder:' : ':playground_slide:';
-                return `${sign}${Math.abs(change)} ${emoji}`;
+                return `${sign}${Math.abs(change)}`;
             };
             
             const message = `${winner} (Rang: ${winnerNewRank} | ${formatRankChange(winnerRankChange)}) hat gegen ${loser} (Rang: ${loserNewRank} | ${formatRankChange(loserRankChange)}) gewonnen! :dart:`;
