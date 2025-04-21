@@ -486,7 +486,7 @@ app.post('/api/recalculate-elo', async (req, res) => {
 // Migriere Elo-Historie für bestehende Spieler
 app.post('/api/migrate-elo-history', async (req, res) => {
     try {
-        const games = await Game.find().sort({ date: 1 });
+        const games = await Game.find().sort({ date: 1 }).populate('winner loser');
         const players = await Player.find();
         
         // Erstelle ein Mapping von Spieler-IDs zu Elo-Historien
@@ -506,8 +506,8 @@ app.post('/api/migrate-elo-history', async (req, res) => {
             if (winner) {
                 const winnerHistory = eloHistoryMap.get(winner._id.toString()) || [];
                 winnerHistory.push({
-                    elo: winner.elo,
-                    date: game.date // Verwende das Spiel-Datum
+                    elo: winner.eloRating,
+                    date: game.date
                 });
                 eloHistoryMap.set(winner._id.toString(), winnerHistory);
             }
@@ -515,8 +515,8 @@ app.post('/api/migrate-elo-history', async (req, res) => {
             if (loser) {
                 const loserHistory = eloHistoryMap.get(loser._id.toString()) || [];
                 loserHistory.push({
-                    elo: loser.elo,
-                    date: game.date // Verwende das Spiel-Datum
+                    elo: loser.eloRating,
+                    date: game.date
                 });
                 eloHistoryMap.set(loser._id.toString(), loserHistory);
             }
