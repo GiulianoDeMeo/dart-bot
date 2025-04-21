@@ -60,8 +60,8 @@ const playerSchema = new mongoose.Schema({
     eloRating: { type: Number, default: 1000 }, // Startwert auf 1000 geändert
     gamesPlayed: { type: Number, default: 0 },   // Für K-Faktor Berechnung
     eloHistory: [{
-        date: { type: Date, required: true },
-        elo: { type: Number, required: true }
+        elo: { type: Number, required: true },
+        date: { type: Date, required: true }
     }]
 });
 
@@ -102,14 +102,14 @@ function calculateKFactor(gamesPlayed) {
     return 16;                        // Experten
 }
 
-function updateEloRatings(winner, loser) {
+function updateEloRatings(winner, loser, gameDate) {
     const kWinner = calculateKFactor(winner.gamesPlayed);
     const kLoser = calculateKFactor(loser.gamesPlayed);
     
     const expectedWinner = calculateExpectedScore(winner.eloRating, loser.eloRating);
     const expectedLoser = calculateExpectedScore(loser.eloRating, winner.eloRating);
     
-    // Speichere die alten Elo-Werte
+    // Speichere alte Elo-Werte
     const oldWinnerElo = winner.eloRating;
     const oldLoserElo = loser.eloRating;
     
@@ -120,11 +120,10 @@ function updateEloRatings(winner, loser) {
     // Update Spieleanzahl
     winner.gamesPlayed += 1;
     loser.gamesPlayed += 1;
-
-    // Füge die neuen Elo-Werte zur Historie hinzu
-    const now = new Date();
-    winner.eloHistory.push({ date: now, elo: winner.eloRating });
-    loser.eloHistory.push({ date: now, elo: loser.eloRating });
+    
+    // Füge neue Elo-Werte zur Historie hinzu
+    winner.eloHistory.push({ elo: winner.eloRating, date: gameDate });
+    loser.eloHistory.push({ elo: loser.eloRating, date: gameDate });
 }
 
 // Funktion zum Zurücksetzen und Neuberechnen der Elo-Ratings
@@ -133,7 +132,8 @@ async function recalculateEloRatings() {
         // Setze alle Spieler auf Startwert zurück
         await Player.updateMany({}, { 
             eloRating: 1000,
-            gamesPlayed: 0
+            gamesPlayed: 0,
+            eloHistory: [{ elo: 1000, date: new Date(0) }] // Initialer Eintrag
         });
         
         // Hole alle Spiele chronologisch sortiert
@@ -145,13 +145,14 @@ async function recalculateEloRatings() {
             const loser = await Player.findOne({ name: game.loser });
             
             if (winner && loser) {
-                updateEloRatings(winner, loser);
+                // Update Elo Ratings mit dem tatsächlichen Spiel-Datum
+                updateEloRatings(winner, loser, game.date);
                 await winner.save();
                 await loser.save();
             }
         }
         
-        console.log('Elo-Ratings wurden neu berechnet');
+        console.log('Elo-Ratings und Historie wurden neu berechnet');
     } catch (error) {
         console.error('Fehler beim Neuberechnen der Elo-Ratings:', error);
     }
@@ -312,13 +313,15 @@ app.post('/api/games', async (req, res) => {
         
         if (!winnerPlayer || !loserPlayer) {
             return res.status(404).json({ error: 'Spieler nicht gefunden' });
-            }
+        }
         
-        // Erstelle das Spiel
+        // Erstelle das Spiel mit aktuellem Datum
+        const gameDate = new Date();
         const game = new Game({
             winner,
             loser,
-            format
+            format,
+            date: gameDate
         });
 
         // Sende Slack-Nachricht
@@ -328,8 +331,8 @@ app.post('/api/games', async (req, res) => {
             const winnerOldRank = oldRankings[winner];
             const loserOldRank = oldRankings[loser];
             
-            // Update Elo Ratings
-            updateEloRatings(winnerPlayer, loserPlayer);
+            // Update Elo Ratings mit Spiel-Datum
+            updateEloRatings(winnerPlayer, loserPlayer, gameDate);
             
             // Speichere die aktualisierten Spieler
             await winnerPlayer.save();
@@ -480,68 +483,6 @@ app.post('/api/recalculate-elo', async (req, res) => {
         res.json({ message: 'Elo-Ratings wurden neu berechnet' });
     } catch (error) {
         res.status(500).json({ error: 'Fehler beim Neuberechnen der Elo-Ratings' });
-    }
-});
-
-// Migriere Elo-Historie für bestehende Spieler
-app.post('/api/migrate-elo-history', async (req, res) => {
-    try {
-        console.log('Starte Elo-Historie Migration...');
-        const games = await Game.find().sort({ date: 1 }).populate('winner loser');
-        const players = await Player.find();
-        
-        console.log(`Gefunden: ${games.length} Spiele und ${players.length} Spieler`);
-        
-        // Erstelle ein Mapping von Spieler-IDs zu Elo-Historien
-        const eloHistoryMap = new Map();
-        
-        // Initialisiere die Elo-Historie für jeden Spieler mit dem Startwert
-        players.forEach(player => {
-            eloHistoryMap.set(player._id.toString(), [{
-                elo: 1000, // Startwert
-                date: new Date(0) // Anfangsdatum
-            }]);
-        });
-        
-        console.log('Initialisierte Elo-Historie für alle Spieler');
-        
-        // Verarbeite jedes Spiel chronologisch
-        for (const game of games) {
-            console.log(`Verarbeite Spiel vom ${game.date}: ${game.winner?.name} vs ${game.loser?.name}`);
-            
-            if (game.winner && game.loser) {
-                const winnerHistory = eloHistoryMap.get(game.winner._id.toString());
-                const loserHistory = eloHistoryMap.get(game.loser._id.toString());
-                
-                if (winnerHistory && loserHistory) {
-                    // Füge neue Einträge hinzu
-                    winnerHistory.push({
-                        elo: game.winner.eloRating,
-                        date: game.date
-                    });
-                    
-                    loserHistory.push({
-                        elo: game.loser.eloRating,
-                        date: game.date
-                    });
-                }
-            }
-        }
-        
-        console.log('Alle Spiele verarbeitet, aktualisiere Spieler...');
-        
-        // Aktualisiere die Spieler mit ihren Elo-Historien
-        for (const [playerId, history] of eloHistoryMap.entries()) {
-            const player = players.find(p => p._id.toString() === playerId);
-            console.log(`Aktualisiere ${player?.name} mit ${history.length} Einträgen`);
-            await Player.findByIdAndUpdate(playerId, { eloHistory: history });
-        }
-        
-        console.log('Migration abgeschlossen');
-        res.json({ message: 'Elo-Historie wurde erfolgreich migriert' });
-    } catch (error) {
-        console.error('Fehler bei der Migration der Elo-Historie:', error);
-        res.status(500).json({ error: 'Interner Serverfehler' });
     }
 });
 
