@@ -168,17 +168,27 @@ function updateTopPlayers() {
         return gameDate >= startOfWeek && gameDate <= endOfWeek;
     });
 
-    // Berechne die Elo-Verbesserung für jeden Spieler
+    // Berechne die Elo-Verbesserung nur für Spieler, die in dieser Woche gespielt haben
     const weeklyEloImprovements = {};
-    players.forEach(player => {
-        const startElo = startOfWeekElo[player.name] || 1000; // Standard-Start-ELO wenn nicht gefunden
-        weeklyEloImprovements[player.name] = player.eloRating - startElo;
+    weeklyGames.forEach(game => {
+        const winner = game.winner;
+        const loser = game.loser;
+        const startEloWinner = startOfWeekElo[winner] || 1000;
+        const startEloLoser = startOfWeekElo[loser] || 1000;
+        
+        // Aktualisiere die Elo-Verbesserung nur für Spieler, die in dieser Woche gespielt haben
+        if (!weeklyEloImprovements[winner]) weeklyEloImprovements[winner] = 0;
+        if (!weeklyEloImprovements[loser]) weeklyEloImprovements[loser] = 0;
+        
+        weeklyEloImprovements[winner] += game.winnerElo - startEloWinner;
+        weeklyEloImprovements[loser] += game.loserElo - startEloLoser;
     });
 
     // Debug-Logs
     console.log('Wochenanfang:', startOfWeek);
     console.log('Wochenende:', endOfWeek);
     console.log('Anzahl Spiele in dieser Woche:', weeklyGames.length);
+    console.log('Spiele dieser Woche:', weeklyGames);
     console.log('Elo-Verbesserungen:', weeklyEloImprovements);
 
     // Finde den Spieler mit der größten Elo-Verbesserung
