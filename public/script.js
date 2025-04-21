@@ -173,22 +173,36 @@ function updateTopPlayers() {
     weeklyGames.forEach(game => {
         const winner = game.winner;
         const loser = game.loser;
-        const startEloWinner = startOfWeekElo[winner] || 1000;
-        const startEloLoser = startOfWeekElo[loser] || 1000;
         
-        // Aktualisiere die Elo-Verbesserung nur für Spieler, die in dieser Woche gespielt haben
+        // Initialisiere die Verbesserungen für beide Spieler, falls noch nicht geschehen
         if (!weeklyEloImprovements[winner]) weeklyEloImprovements[winner] = 0;
         if (!weeklyEloImprovements[loser]) weeklyEloImprovements[loser] = 0;
         
-        weeklyEloImprovements[winner] += game.winnerElo - startEloWinner;
-        weeklyEloImprovements[loser] += game.loserElo - startEloLoser;
+        // Berechne die Elo-Verbesserung für den Gewinner
+        const startEloWinner = startOfWeekElo[winner] || 1000;
+        const endEloWinner = game.winnerElo || 1000;
+        weeklyEloImprovements[winner] = endEloWinner - startEloWinner;
+        
+        // Berechne die Elo-Verbesserung für den Verlierer
+        const startEloLoser = startOfWeekElo[loser] || 1000;
+        const endEloLoser = game.loserElo || 1000;
+        weeklyEloImprovements[loser] = endEloLoser - startEloLoser;
     });
 
     // Debug-Logs
-    console.log('Wochenanfang:', startOfWeek);
-    console.log('Wochenende:', endOfWeek);
+    console.log('Wochenanfang:', startOfWeek.toLocaleString());
+    console.log('Wochenende:', endOfWeek.toLocaleString());
     console.log('Anzahl Spiele in dieser Woche:', weeklyGames.length);
-    console.log('Elo-Verbesserungen:', weeklyEloImprovements);
+    if (weeklyGames.length > 0) {
+        console.log('Spiele dieser Woche:', weeklyGames.map(g => ({
+            winner: g.winner,
+            loser: g.loser,
+            date: new Date(g.date).toLocaleString()
+        })));
+    }
+    if (Object.keys(weeklyEloImprovements).length > 0) {
+        console.log('Elo-Verbesserungen:', weeklyEloImprovements);
+    }
 
     // Finde den Spieler mit der größten Elo-Verbesserung
     let bestWeeklyPlayer = null;
@@ -200,7 +214,11 @@ function updateTopPlayers() {
         }
     });
 
-    console.log('Bester Spieler der Woche:', bestWeeklyPlayer, 'mit Verbesserung:', maxImprovement);
+    if (bestWeeklyPlayer) {
+        console.log('Bester Spieler der Woche:', bestWeeklyPlayer, 'mit Verbesserung:', maxImprovement);
+    } else {
+        console.log('Kein Spieler der Woche - keine Spiele in dieser Woche');
+    }
 
     // Filtere Spieler mit mindestens einem Spiel und sortiere nach Elo-Rating
     const activePlayers = players
