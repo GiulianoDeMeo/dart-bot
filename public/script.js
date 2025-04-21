@@ -480,7 +480,14 @@ function setupPlayerSelection() {
             // Lade die Daten neu
             await loadGames();
             await loadStats();
+            
+            // Aktualisiere die Top 10 Spieler
             updateTopPlayers();
+            
+            // Zeige die Top 10 Ansicht
+            statsViewSelect.value = 'top10';
+            top10Container.style.display = 'block';
+            playerStatsContainer.style.display = 'none';
 
             alert('Spiel erfolgreich gespeichert!');
         } catch (error) {
