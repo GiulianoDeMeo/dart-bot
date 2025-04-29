@@ -107,16 +107,16 @@ function updateEloRatings(winner, loser, gameDate) {
     const kWinner = calculateKFactor(winner.gamesPlayed);
     const kLoser = calculateKFactor(loser.gamesPlayed);
     
-    const expectedWinner = calculateExpectedScore(winner.eloRating, loser.eloRating);
-    const expectedLoser = calculateExpectedScore(loser.eloRating, winner.eloRating);
+    // Verwende die aktuellen Ratings statt der historischen
+    const winnerElo = winner.eloRating;
+    const loserElo = loser.eloRating;
     
-    // Speichere alte Elo-Werte
-    const oldWinnerElo = winner.eloRating;
-    const oldLoserElo = loser.eloRating;
+    const expectedWinner = calculateExpectedScore(winnerElo, loserElo);
+    const expectedLoser = calculateExpectedScore(loserElo, winnerElo);
     
     // Update Ratings
-    winner.eloRating = Math.round(winner.eloRating + kWinner * (1 - expectedWinner));
-    loser.eloRating = Math.round(loser.eloRating + kLoser * (0 - expectedLoser));
+    winner.eloRating = Math.round(winnerElo + kWinner * (1 - expectedWinner));
+    loser.eloRating = Math.round(loserElo + kLoser * (0 - expectedLoser));
     
     // Update Spieleanzahl
     winner.gamesPlayed += 1;
