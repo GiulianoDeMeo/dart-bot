@@ -215,8 +215,15 @@ function updateTopPlayers() {
     // Filtere Spieler mit mindestens einem Spiel und sortiere nach Elo-Rating
     const activePlayers = players
         .filter(player => player.gamesPlayed > 0)
-        .sort((a, b) => b.eloRating - a.eloRating)
-        .slice(0, 10); // Nur Top 10
+        .sort((a, b) => {
+            // Zuerst nach Elo-Rating
+            if (b.eloRating !== a.eloRating) {
+                return b.eloRating - a.eloRating;
+            }
+            // Bei gleichem Elo nach Siegesquote
+            return parseFloat(b.winRate) - parseFloat(a.winRate);
+        })
+        .slice(0, 10);
     
     activePlayers.forEach((player, index) => {
         const row = document.createElement('tr');
