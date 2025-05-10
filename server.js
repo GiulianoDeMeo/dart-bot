@@ -155,7 +155,9 @@ app.post('/api/slack/commands', async (req, res) => {
                     const winnerRankChange = winnerOldRank - winnerNewRank;
                     const loserRankChange = loserOldRank - loserNewRank;
                     
-                    response += `• ${game.winner} (${winner.eloRating} → ${winner.eloRating + eloChangeWinner}, Rang ${winnerOldRank} → ${winnerNewRank}) vs ${game.loser} (${loser.eloRating} → ${loser.eloRating + eloChangeLoser}, Rang ${loserOldRank} → ${loserNewRank})\n`;
+                    response += `• ${game.winner} hat gegen ${game.loser} gewonnen\n`;
+                    response += `  ${game.winner}: ${winner.eloRating} → ${winner.eloRating + eloChangeWinner} Elo (Rang ${winnerOldRank} → ${winnerNewRank})\n`;
+                    response += `  ${game.loser}: ${loser.eloRating} → ${loser.eloRating + eloChangeLoser} Elo (Rang ${loserOldRank} → ${loserNewRank})\n`;
                     response += `  Datum: ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}\n\n`;
                 }
                 break;
