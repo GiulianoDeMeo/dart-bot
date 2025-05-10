@@ -94,6 +94,7 @@ const slack = new WebClient(process.env.SLACK_TOKEN);
 // Slash-Command Endpunkte
 app.post('/api/slack/commands', async (req, res) => {
     try {
+        console.log('Slack Command empfangen:', req.body);
         const { command, text, user_id, response_url } = req.body;
         
         // Sofortige Antwort senden (Slack erwartet dies innerhalb von 3 Sekunden)
@@ -103,15 +104,23 @@ app.post('/api/slack/commands', async (req, res) => {
         
         switch (command) {
             case '/dart-last':
+                console.log('Verarbeite /dart-last Command');
                 // Hole die letzten 3 Spiele
                 const lastGames = await Game.find()
                     .sort({ date: -1 })
                     .limit(3);
                 
+                console.log('Gefundene Spiele:', lastGames.length);
+                
                 response = '*Letzte 3 Spiele:*\n';
                 for (const game of lastGames) {
                     const winner = await Player.findOne({ name: game.winner });
                     const loser = await Player.findOne({ name: game.loser });
+                    
+                    if (!winner || !loser) {
+                        console.log('Spieler nicht gefunden:', { winner: game.winner, loser: game.loser });
+                        continue;
+                    }
                     
                     // Berechne Elo-Änderungen
                     const kWinner = calculateKFactor(winner.gamesPlayed - 1);
@@ -269,18 +278,24 @@ app.post('/api/slack/commands', async (req, res) => {
         }
         
         // Sende die Antwort an Slack
+        console.log('Sende Antwort an Slack:', response);
         await slack.chat.postMessage({
             channel: user_id,
             text: response,
             mrkdwn: true
         });
+        console.log('Antwort erfolgreich gesendet');
         
     } catch (error) {
         console.error('Fehler bei Slash-Command:', error);
-        await slack.chat.postMessage({
-            channel: user_id,
-            text: 'Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.'
-        });
+        try {
+            await slack.chat.postMessage({
+                channel: user_id,
+                text: 'Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.'
+            });
+        } catch (slackError) {
+            console.error('Fehler beim Senden der Fehlermeldung:', slackError);
+        }
     }
 });
 
