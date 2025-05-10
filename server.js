@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 const { WebClient } = require('@slack/web-api');
+const fetch = require('node-fetch');
 require('dotenv').config();
 
 const app = express();
