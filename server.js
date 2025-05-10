@@ -290,7 +290,7 @@ app.post('/api/slack/commands', async (req, res) => {
                 console.log('Sortierte Spieler:', sortedPlayers);
 
                 // Erstelle die Antwort
-                let response = `*Spieler der Woche (${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}):*\n\n`;
+                response = `*Spieler der Woche (${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}):*\n\n`;
                 
                 if (sortedPlayers.length === 0) {
                     response += "Keine Spiele in dieser Woche.";
