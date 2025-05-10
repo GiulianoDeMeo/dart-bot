@@ -91,6 +91,205 @@ const Game = mongoose.model('Game', gameSchema);
 // Slack Client initialisieren
 const slack = new WebClient(process.env.SLACK_TOKEN);
 
+// Test-Endpunkt für Slack-Commands
+app.post('/api/slack/commands', async (req, res) => {
+    console.log('Slack Command empfangen:', req.body);
+    res.status(200).send('Test erfolgreich');
+});
+
+// Slash-Command Endpunkte
+app.post('/api/slack/commands', async (req, res) => {
+    try {
+        const { command, text, user_id, response_url } = req.body;
+        
+        // Sofortige Antwort senden (Slack erwartet dies innerhalb von 3 Sekunden)
+        res.status(200).send('Verarbeite Anfrage...');
+        
+        let response = '';
+        
+        switch (command) {
+            case '/dart-last':
+                // Hole die letzten 3 Spiele
+                const lastGames = await Game.find()
+                    .sort({ date: -1 })
+                    .limit(3);
+                
+                response = '*Letzte 3 Spiele:*\n';
+                for (const game of lastGames) {
+                    const winner = await Player.findOne({ name: game.winner });
+                    const loser = await Player.findOne({ name: game.loser });
+                    
+                    // Berechne Elo-Änderungen
+                    const kWinner = calculateKFactor(winner.gamesPlayed - 1);
+                    const kLoser = calculateKFactor(loser.gamesPlayed - 1);
+                    const expectedWinner = calculateExpectedScore(winner.eloRating, loser.eloRating);
+                    const expectedLoser = calculateExpectedScore(loser.eloRating, winner.eloRating);
+                    const eloChangeWinner = Math.round(kWinner * (1 - expectedWinner));
+                    const eloChangeLoser = Math.round(kLoser * (0 - expectedLoser));
+                    
+                    // Berechne Rangänderungen
+                    const oldRankings = await calculateRankings();
+                    const winnerOldRank = oldRankings[winner.name];
+                    const loserOldRank = oldRankings[loser.name];
+                    
+                    // Simuliere das Spiel für neue Rankings
+                    const tempWinner = { ...winner.toObject() };
+                    const tempLoser = { ...loser.toObject() };
+                    updateEloRatings(tempWinner, tempLoser, game.date);
+                    
+                    // Berechne neue Rankings
+                    const newRankings = await calculateRankings();
+                    const winnerNewRank = newRankings[winner.name];
+                    const loserNewRank = newRankings[loser.name];
+                    
+                    const winnerRankChange = winnerOldRank - winnerNewRank;
+                    const loserRankChange = loserOldRank - loserNewRank;
+                    
+                    response += `• ${game.winner} (${winner.eloRating} → ${winner.eloRating + eloChangeWinner}, Rang ${winnerOldRank} → ${winnerNewRank}) vs ${game.loser} (${loser.eloRating} → ${loser.eloRating + eloChangeLoser}, Rang ${loserOldRank} → ${loserNewRank})\n`;
+                    response += `  Datum: ${game.date.toLocaleString()}\n\n`;
+                }
+                break;
+                
+            case '/dart-player':
+                // Hole Statistiken für einen bestimmten Spieler
+                const playerName = text.trim();
+                if (!playerName) {
+                    response = 'Bitte gib einen Spielernamen an: `/dart-player [Name]`';
+                    break;
+                }
+                
+                const player = await Player.findOne({ name: playerName });
+                if (!player) {
+                    response = `Spieler "${playerName}" nicht gefunden.`;
+                    break;
+                }
+                
+                // Berechne aktuelle Rankings
+                const rankings = await calculateRankings();
+                const currentRank = rankings[playerName];
+                
+                // Berechne Elo-Verbesserung diese Woche
+                const playerWeekAgo = new Date();
+                playerWeekAgo.setDate(playerWeekAgo.getDate() - 7);
+                
+                const eloHistory = player.eloHistory;
+                const lastWeekElo = eloHistory.find(h => h.date <= playerWeekAgo)?.elo || player.eloRating;
+                const eloImprovement = player.eloRating - lastWeekElo;
+                
+                response = `*Statistiken für ${playerName}:*\n`;
+                response += `• Aktuelles Elo-Rating: ${player.eloRating} (${eloImprovement > 0 ? '+' : ''}${eloImprovement} diese Woche)\n`;
+                response += `• Aktueller Rang: ${currentRank}\n\n`;
+                
+                // Hole die letzten 3 Spiele
+                const playerGames = await Game.find({
+                    $or: [{ winner: playerName }, { loser: playerName }]
+                }).sort({ date: -1 }).limit(3);
+                
+                if (playerGames.length > 0) {
+                    response += '*Letzte 3 Spiele:*\n';
+                    for (const game of playerGames) {
+                        const result = game.winner === playerName ? 'gewonnen' : 'verloren';
+                        const opponent = game.winner === playerName ? game.loser : game.winner;
+                        response += `• ${game.date.toLocaleString()}: ${result} gegen ${opponent}\n`;
+                    }
+                }
+                break;
+
+            case '/dart-week':
+                // Berechne die aktuelle Arbeitswoche (Montag-Freitag)
+                const currentDate = new Date();
+                const startOfWeek = new Date(currentDate);
+                
+                // Setze auf Montag 00:00:00
+                startOfWeek.setDate(currentDate.getDate() - ((currentDate.getDay() + 6) % 7));
+                startOfWeek.setHours(0, 0, 0, 0);
+                
+                // Setze auf Sonntag 23:59:59
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                endOfWeek.setHours(23, 59, 59, 999);
+
+                // Hole alle Spieler und ihre Elo-Historie
+                const allPlayers = await Player.find();
+                const weeklyGames = await Game.find({
+                    date: {
+                        $gte: startOfWeek,
+                        $lte: endOfWeek
+                    }
+                });
+
+                // Erstelle ein Mapping von Spielernamen zu ihren Elo-Werten am Wochenanfang
+                const startOfWeekElo = {};
+                allPlayers.forEach(player => {
+                    // Finde den letzten Elo-Wert vor dem Wochenstart
+                    const lastEloBeforeWeek = player.eloHistory
+                        .filter(entry => new Date(entry.date) < startOfWeek)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                    
+                    startOfWeekElo[player.name] = lastEloBeforeWeek ? lastEloBeforeWeek.elo : 1000;
+                });
+
+                // Berechne die Elo-Verbesserung nur für Spieler, die in dieser Woche gespielt haben
+                const weeklyEloImprovements = {};
+                const playersInWeeklyGames = new Set();
+                
+                // Sammle alle Spieler, die diese Woche gespielt haben
+                weeklyGames.forEach(game => {
+                    playersInWeeklyGames.add(game.winner);
+                    playersInWeeklyGames.add(game.loser);
+                });
+                
+                // Berechne die Elo-Verbesserung für jeden Spieler
+                playersInWeeklyGames.forEach(playerName => {
+                    const player = allPlayers.find(p => p.name === playerName);
+                    if (!player) return;
+                    
+                    // Finde den aktuellen Elo-Wert
+                    const currentElo = player.eloRating;
+                    
+                    // Finde den Start-Elo dieser Woche
+                    const startElo = startOfWeekElo[playerName] || 1000;
+                    
+                    // Berechne die Verbesserung
+                    weeklyEloImprovements[playerName] = currentElo - startElo;
+                });
+
+                // Sortiere Spieler nach Elo-Verbesserung
+                const sortedWeeklyPlayers = Object.entries(weeklyEloImprovements)
+                    .filter(([_, improvement]) => improvement > 0)
+                    .sort((a, b) => b[1] - a[1]);
+
+                response = '*Spieler der Woche (Elo-Verbesserung):*\n';
+                if (sortedWeeklyPlayers.length > 0) {
+                    sortedWeeklyPlayers.forEach(([playerName, improvement], index) => {
+                        const player = allPlayers.find(p => p.name === playerName);
+                        response += `${index + 1}. ${playerName}: ${player.eloRating} (+${improvement})\n`;
+                    });
+                } else {
+                    response += 'Keine Verbesserungen diese Woche.';
+                }
+                break;
+                
+            default:
+                response = 'Unbekannter Befehl. Verfügbare Befehle:\n• `/dart-last` - Zeigt die letzten 3 Spiele\n• `/dart-player [Name]` - Zeigt Statistiken für einen Spieler\n• `/dart-week` - Zeigt die Spieler der Woche';
+        }
+        
+        // Sende die Antwort an Slack
+        await slack.chat.postMessage({
+            channel: user_id,
+            text: response,
+            mrkdwn: true
+        });
+        
+    } catch (error) {
+        console.error('Fehler bei Slash-Command:', error);
+        await slack.chat.postMessage({
+            channel: user_id,
+            text: 'Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.'
+        });
+    }
+});
+
 // Elo Rating Berechnungsfunktionen
 function calculateExpectedScore(playerRating, opponentRating) {
     return 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
