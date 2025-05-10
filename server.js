@@ -246,7 +246,7 @@ app.post('/api/slack/commands', async (req, res) => {
                     startOfWeekElo[player.name] = lastEloBeforeWeek ? lastEloBeforeWeek.elo : 1000;
                 });
 
-                // Berechne die Elo-Verbesserung nur für Spieler, die in dieser Woche gespielt haben
+                // Berechne die Elo-Verbesserung für jeden Spieler
                 const weeklyEloImprovements = {};
                 const playersInWeeklyGames = new Set();
                 
@@ -271,22 +271,27 @@ app.post('/api/slack/commands', async (req, res) => {
                     weeklyEloImprovements[playerName] = currentElo - startElo;
                 });
 
-                // Sortiere Spieler nach Elo-Verbesserung
-                const sortedWeeklyPlayers = Object.entries(weeklyEloImprovements)
-                    .filter(([_, improvement]) => improvement > 0)
-                    .sort((a, b) => b[1] - a[1]);
+                // Sortiere Spieler nach Elo-Verbesserung (absteigend)
+                const sortedPlayers = Object.entries(weeklyEloImprovements)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([name, improvement]) => ({
+                        name,
+                        improvement
+                    }));
 
-                response = '*Spieler der Woche (Elo-Verbesserung):*\n';
-                if (sortedWeeklyPlayers.length > 0) {
-                    sortedWeeklyPlayers.forEach(([playerName, improvement], index) => {
-                        const player = allPlayers.find(p => p.name === playerName);
-                        response += `${index + 1}. ${playerName}: ${player.eloRating} (+${improvement})\n`;
-                    });
+                // Erstelle die Antwort
+                let response = `*Spieler der Woche (${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}):*\n\n`;
+                
+                if (sortedPlayers.length === 0) {
+                    response += "Keine Spiele in dieser Woche.";
                 } else {
-                    response += 'Keine Verbesserungen diese Woche.';
+                    sortedPlayers.forEach((player, index) => {
+                        const sign = player.improvement >= 0 ? '+' : '';
+                        response += `${index + 1}. ${player.name}: ${sign}${player.improvement.toFixed(1)} Elo\n`;
+                    });
                 }
                 break;
-                
+
             default:
                 response = 'Unbekannter Befehl. Verfügbare Befehle:\n• `/dart-last` - Zeigt die letzten 3 Spiele\n• `/dart-player [Name]` - Zeigt Statistiken für einen Spieler\n• `/dart-week` - Zeigt die Spieler der Woche';
         }
