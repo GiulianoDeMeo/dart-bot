@@ -91,12 +91,6 @@ const Game = mongoose.model('Game', gameSchema);
 // Slack Client initialisieren
 const slack = new WebClient(process.env.SLACK_TOKEN);
 
-// Test-Endpunkt für Slack-Commands
-app.post('/api/slack/commands', async (req, res) => {
-    console.log('Slack Command empfangen:', req.body);
-    res.status(200).send('Test erfolgreich');
-});
-
 // Slash-Command Endpunkte
 app.post('/api/slack/commands', async (req, res) => {
     try {
