@@ -177,13 +177,21 @@ app.post('/api/slack/commands', async (req, res) => {
                 const rankings = await calculateRankings();
                 const currentRank = rankings[playerName];
                 
-                // Berechne Elo-Verbesserung diese Woche
-                const playerWeekAgo = new Date();
-                playerWeekAgo.setDate(playerWeekAgo.getDate() - 7);
+                // Berechne die aktuelle Arbeitswoche (Montag-Freitag)
+                const playerCurrentDate = new Date();
+                const playerStartOfWeek = new Date(playerCurrentDate);
                 
-                const eloHistory = player.eloHistory;
-                const lastWeekElo = eloHistory.find(h => h.date <= playerWeekAgo)?.elo || player.eloRating;
-                const eloImprovement = player.eloRating - lastWeekElo;
+                // Setze auf Montag 00:00:00
+                playerStartOfWeek.setDate(playerCurrentDate.getDate() - ((playerCurrentDate.getDay() + 6) % 7));
+                playerStartOfWeek.setHours(0, 0, 0, 0);
+                
+                // Finde den letzten Elo-Wert vor dem Wochenstart
+                const lastEloBeforeWeek = player.eloHistory
+                    .filter(entry => new Date(entry.date) < playerStartOfWeek)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+                
+                const startElo = lastEloBeforeWeek ? lastEloBeforeWeek.elo : 1000;
+                const eloImprovement = player.eloRating - startElo;
                 
                 response = `*Statistiken für ${playerName}:*\n`;
                 response += `• Aktuelles Elo-Rating: ${player.eloRating} (${eloImprovement > 0 ? '+' : ''}${eloImprovement} diese Woche)\n`;
