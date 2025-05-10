@@ -299,6 +299,13 @@ app.post('/api/slack/commands', async (req, res) => {
         
         // Sende die Antwort an Slack über response_url
         console.log('Sende Antwort an Slack über response_url:', response_url);
+        console.log('Antwort-Text:', response);
+        
+        if (!response_url) {
+            console.error('Keine response_url vorhanden');
+            return;
+        }
+
         try {
             const responseData = {
                 response_type: 'in_channel',
@@ -306,25 +313,36 @@ app.post('/api/slack/commands', async (req, res) => {
                 mrkdwn: true
             };
             
+            console.log('Sende folgende Daten an Slack:', JSON.stringify(responseData, null, 2));
+            
             const responseResult = await fetch(response_url, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(responseData)
             });
+            
+            const responseText = await responseResult.text();
+            console.log('Slack Antwort-Text:', responseText);
             
             if (!responseResult.ok) {
                 console.error('Fehler beim Senden der Slack-Antwort:', {
                     status: responseResult.status,
                     statusText: responseResult.statusText,
-                    url: response_url
+                    url: response_url,
+                    responseText: responseText
                 });
             } else {
                 console.log('Antwort erfolgreich gesendet');
             }
         } catch (error) {
             console.error('Fehler beim Senden der Slack-Antwort:', error);
+            console.error('Error Details:', {
+                message: error.message,
+                stack: error.stack
+            });
         }
         
     } catch (error) {
