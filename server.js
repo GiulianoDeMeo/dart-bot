@@ -257,10 +257,16 @@ app.post('/api/slack/commands', async (req, res) => {
                     playersInWeeklyGames.add(game.loser);
                 });
                 
+                console.log('Spieler in dieser Woche:', Array.from(playersInWeeklyGames));
+                console.log('Anzahl Spiele diese Woche:', weeklyGames.length);
+                
                 // Berechne die Elo-Verbesserung für jeden Spieler
                 playersInWeeklyGames.forEach(playerName => {
                     const player = allPlayers.find(p => p.name === playerName);
-                    if (!player) return;
+                    if (!player) {
+                        console.log(`Spieler ${playerName} nicht gefunden`);
+                        return;
+                    }
                     
                     // Finde den aktuellen Elo-Wert
                     const currentElo = player.eloRating;
@@ -270,6 +276,7 @@ app.post('/api/slack/commands', async (req, res) => {
                     
                     // Berechne die Verbesserung
                     weeklyEloImprovements[playerName] = currentElo - startElo;
+                    console.log(`${playerName}: ${startElo} -> ${currentElo} (${weeklyEloImprovements[playerName]})`);
                 });
 
                 // Sortiere Spieler nach Elo-Verbesserung (absteigend)
@@ -279,6 +286,8 @@ app.post('/api/slack/commands', async (req, res) => {
                         name,
                         improvement
                     }));
+
+                console.log('Sortierte Spieler:', sortedPlayers);
 
                 // Erstelle die Antwort
                 let response = `*Spieler der Woche (${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}):*\n\n`;
@@ -304,6 +313,11 @@ app.post('/api/slack/commands', async (req, res) => {
         if (!response_url) {
             console.error('Keine response_url vorhanden');
             return;
+        }
+
+        if (!response || response.trim() === '') {
+            console.error('Leere Antwort generiert');
+            response = 'Keine Daten verfügbar.';
         }
 
         try {
