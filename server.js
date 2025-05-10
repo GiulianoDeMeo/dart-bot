@@ -290,14 +290,14 @@ app.post('/api/slack/commands', async (req, res) => {
                 console.log('Sortierte Spieler:', sortedPlayers);
 
                 // Erstelle die Antwort
-                response = `*Spieler der Woche (${startOfWeek.toLocaleDateString()} - ${endOfWeek.toLocaleDateString()}):*\n\n`;
+                response = `*Spieler der Woche (${startOfWeek.toLocaleDateString('de-DE')} - ${endOfWeek.toLocaleDateString('de-DE')}):*\n\n`;
                 
                 if (sortedPlayers.length === 0) {
                     response += "Keine Spiele in dieser Woche.";
                 } else {
                     sortedPlayers.forEach((player, index) => {
                         const sign = player.improvement >= 0 ? '+' : '';
-                        response += `${index + 1}. ${player.name}: ${sign}${player.improvement.toFixed(1)} Elo\n`;
+                        response += `${index + 1}. ${player.name}: ${sign}${Math.round(player.improvement)} Elo\n`;
                     });
                 }
                 break;
