@@ -156,7 +156,7 @@ app.post('/api/slack/commands', async (req, res) => {
                     const loserRankChange = loserOldRank - loserNewRank;
                     
                     response += `• ${game.winner} (${winner.eloRating} → ${winner.eloRating + eloChangeWinner}, Rang ${winnerOldRank} → ${winnerNewRank}) vs ${game.loser} (${loser.eloRating} → ${loser.eloRating + eloChangeLoser}, Rang ${loserOldRank} → ${loserNewRank})\n`;
-                    response += `  Datum: ${game.date.toLocaleDateString('de-DE')}\n\n`;
+                    response += `  Datum: ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}\n\n`;
                 }
                 break;
                 
@@ -208,7 +208,7 @@ app.post('/api/slack/commands', async (req, res) => {
                     for (const game of playerGames) {
                         const result = game.winner === playerName ? 'gewonnen' : 'verloren';
                         const opponent = game.winner === playerName ? game.loser : game.winner;
-                        response += `• ${game.date.toLocaleDateString('de-DE')}: ${result} gegen ${opponent}\n`;
+                        response += `• ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}: ${result} gegen ${opponent}\n`;
                     }
                 }
                 break;
