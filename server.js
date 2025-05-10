@@ -14,6 +14,7 @@ app.use(cors({
     methods: ['GET', 'POST', 'DELETE', 'UPDATE', 'PUT', 'PATCH']
 }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // MongoDB Verbindung
@@ -94,8 +95,13 @@ const slack = new WebClient(process.env.SLACK_TOKEN);
 // Slash-Command Endpunkte
 app.post('/api/slack/commands', async (req, res) => {
     try {
-        console.log('Slack Command empfangen:', req.body);
+        console.log('Slack Command empfangen:', JSON.stringify(req.body, null, 2));
         const { command, text, user_id, response_url } = req.body;
+        
+        if (!command || !response_url) {
+            console.error('Fehlende Parameter:', { command, response_url });
+            return res.status(400).send('Fehlende Parameter');
+        }
         
         // Sofortige Antwort senden (Slack erwartet dies innerhalb von 3 Sekunden)
         res.status(200).send('Verarbeite Anfrage...');
