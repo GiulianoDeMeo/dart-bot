@@ -277,21 +277,38 @@ app.post('/api/slack/commands', async (req, res) => {
                 response = 'Unbekannter Befehl. Verfügbare Befehle:\n• `/dart-last` - Zeigt die letzten 3 Spiele\n• `/dart-player [Name]` - Zeigt Statistiken für einen Spieler\n• `/dart-week` - Zeigt die Spieler der Woche';
         }
         
-        // Sende die Antwort an Slack
-        console.log('Sende Antwort an Slack:', response);
-        await slack.chat.postMessage({
-            channel: user_id,
+        // Sende die Antwort an Slack über response_url
+        console.log('Sende Antwort an Slack über response_url:', response_url);
+        const responseData = {
+            response_type: 'in_channel',
             text: response,
             mrkdwn: true
+        };
+        
+        const responseResult = await fetch(response_url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(responseData)
         });
-        console.log('Antwort erfolgreich gesendet');
+        
+        console.log('Antwort-Status:', responseResult.status);
         
     } catch (error) {
         console.error('Fehler bei Slash-Command:', error);
         try {
-            await slack.chat.postMessage({
-                channel: user_id,
+            const errorResponse = {
+                response_type: 'ephemeral',
                 text: 'Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.'
+            };
+            
+            await fetch(response_url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(errorResponse)
             });
         } catch (slackError) {
             console.error('Fehler beim Senden der Fehlermeldung:', slackError);
