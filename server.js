@@ -142,22 +142,66 @@ app.post('/api/slack/commands', async (req, res) => {
                     const loserEloBefore = loserEloHistory[1]?.elo || 1000;   // Wert vor dem Spiel
                     const loserEloAfter = loserEloHistory[0]?.elo || 1000;    // Wert nach dem Spiel
 
-                    // Hole alle Spieler und ihre Elo-Historie
+                    // Hole alle Spieler und ihre Spiele
                     const allPlayers = await Player.find();
+                    const allGames = await Game.find();
                     
                     // Berechne Rankings vor dem Spiel
                     const playersBeforeGame = allPlayers.map(p => {
                         const eloHistory = p.eloHistory
                             .filter(entry => new Date(entry.date) < game.date)
                             .sort((a, b) => new Date(b.date) - new Date(a.date));
+                        
+                        // Filtere Spiele vor dem aktuellen Spiel
+                        const playerGames = allGames.filter(g => 
+                            new Date(g.date) < game.date && 
+                            (g.winner === p.name || g.loser === p.name)
+                        );
+                        
+                        const wins = playerGames.filter(g => g.winner === p.name).length;
+                        const totalGames = playerGames.length;
+                        const winRate = totalGames > 0 ? (wins / totalGames) : 0;
+                        
                         return {
                             name: p.name,
-                            eloRating: eloHistory[0]?.elo || 1000
+                            eloRating: eloHistory[0]?.elo || 1000,
+                            gamesPlayed: totalGames,
+                            wins,
+                            winRate
                         };
                     });
                     
-                    // Sortiere nach Elo für Rankings vor dem Spiel
-                    playersBeforeGame.sort((a, b) => b.eloRating - a.eloRating);
+                    // Sortiere nach:
+                    // 1. Spieler mit Spielen kommen zuerst
+                    // 2. Elo-Rating (absteigend)
+                    // 3. Anzahl der Siege (absteigend)
+                    // 4. Siegesquote (absteigend)
+                    playersBeforeGame.sort((a, b) => {
+                        // Zuerst nach Spielerfahrung
+                        const aHasGames = a.gamesPlayed > 0;
+                        const bHasGames = b.gamesPlayed > 0;
+                        
+                        if (aHasGames !== bHasGames) {
+                            return bHasGames - aHasGames; // Spieler mit Spielen kommen nach vorne
+                        }
+                        
+                        // Wenn beide Spieler Spiele haben, nach Elo sortieren
+                        if (aHasGames && bHasGames) {
+                            if (b.eloRating !== a.eloRating) {
+                                return b.eloRating - a.eloRating;
+                            }
+                            // Bei gleichem Elo nach Siegen
+                            if (b.wins !== a.wins) {
+                                return b.wins - a.wins;
+                            }
+                            // Bei gleichen Siegen nach Siegesquote
+                            return b.winRate - a.winRate;
+                        }
+                        
+                        // Wenn beide keine Spiele haben, nach Elo sortieren
+                        return b.eloRating - a.eloRating;
+                    });
+                    
                     const oldRankings = {};
                     playersBeforeGame.forEach((player, index) => {
                         oldRankings[player.name] = index + 1;
@@ -168,14 +212,48 @@ app.post('/api/slack/commands', async (req, res) => {
                         const eloHistory = p.eloHistory
                             .filter(entry => new Date(entry.date) <= game.date)
                             .sort((a, b) => new Date(b.date) - new Date(a.date));
+                        
+                        // Filtere Spiele bis zum aktuellen Spiel
+                        const playerGames = allGames.filter(g => 
+                            new Date(g.date) <= game.date && 
+                            (g.winner === p.name || g.loser === p.name)
+                        );
+                        
+                        const wins = playerGames.filter(g => g.winner === p.name).length;
+                        const totalGames = playerGames.length;
+                        const winRate = totalGames > 0 ? (wins / totalGames) : 0;
+                        
                         return {
                             name: p.name,
-                            eloRating: eloHistory[0]?.elo || 1000
+                            eloRating: eloHistory[0]?.elo || 1000,
+                            gamesPlayed: totalGames,
+                            wins,
+                            winRate
                         };
                     });
                     
-                    // Sortiere nach Elo für Rankings nach dem Spiel
-                    playersAfterGame.sort((a, b) => b.eloRating - a.eloRating);
+                    // Sortiere nach den gleichen Kriterien wie vorher
+                    playersAfterGame.sort((a, b) => {
+                        const aHasGames = a.gamesPlayed > 0;
+                        const bHasGames = b.gamesPlayed > 0;
+                        
+                        if (aHasGames !== bHasGames) {
+                            return bHasGames - aHasGames;
+                        }
+                        
+                        if (aHasGames && bHasGames) {
+                            if (b.eloRating !== a.eloRating) {
+                                return b.eloRating - a.eloRating;
+                            }
+                            if (b.wins !== a.wins) {
+                                return b.wins - a.wins;
+                            }
+                            return b.winRate - a.winRate;
+                        }
+                        
+                        return b.eloRating - a.eloRating;
+                    });
+                    
                     const newRankings = {};
                     playersAfterGame.forEach((player, index) => {
                         newRankings[player.name] = index + 1;
