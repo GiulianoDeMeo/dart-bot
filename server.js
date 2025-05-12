@@ -129,14 +129,37 @@ app.post('/api/slack/commands', async (req, res) => {
                         continue;
                     }
                     
-                    // Berechne aktuelle Rankings
-                    const rankings = await calculateRankings();
-                    const winnerRank = rankings[winner.name];
-                    const loserRank = rankings[loser.name];
+                    // Finde die Elo-Werte vor und nach dem Spiel
+                    const winnerEloHistory = winner.eloHistory
+                        .filter(entry => new Date(entry.date) <= game.date)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date));
+                    const loserEloHistory = loser.eloHistory
+                        .filter(entry => new Date(entry.date) <= game.date)
+                        .sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    const winnerEloBefore = winnerEloHistory[1]?.elo || 1000; // Wert vor dem Spiel
+                    const winnerEloAfter = winnerEloHistory[0]?.elo || 1000;  // Wert nach dem Spiel
+                    const loserEloBefore = loserEloHistory[1]?.elo || 1000;   // Wert vor dem Spiel
+                    const loserEloAfter = loserEloHistory[0]?.elo || 1000;    // Wert nach dem Spiel
+                    
+                    // Berechne die Rankings vor und nach dem Spiel
+                    const oldRankings = await calculateRankings();
+                    const winnerOldRank = oldRankings[winner.name];
+                    const loserOldRank = oldRankings[loser.name];
+                    
+                    // Simuliere das Spiel für neue Rankings
+                    const tempWinner = { ...winner.toObject() };
+                    const tempLoser = { ...loser.toObject() };
+                    updateEloRatings(tempWinner, tempLoser, game.date);
+                    
+                    // Berechne neue Rankings
+                    const newRankings = await calculateRankings();
+                    const winnerNewRank = newRankings[winner.name];
+                    const loserNewRank = newRankings[loser.name];
                     
                     response += `• ${game.winner} hat gegen ${game.loser} gewonnen\n`;
-                    response += `  ${game.winner}: ${winner.eloRating} Elo (Rang ${winnerRank})\n`;
-                    response += `  ${game.loser}: ${loser.eloRating} Elo (Rang ${loserRank})\n`;
+                    response += `  ${game.winner}: ${winnerEloBefore} → ${winnerEloAfter} Elo (Rang ${winnerOldRank} → ${winnerNewRank})\n`;
+                    response += `  ${game.loser}: ${loserEloBefore} → ${loserEloAfter} Elo (Rang ${loserOldRank} → ${loserNewRank})\n`;
                     response += `  Datum: ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}\n\n`;
                 }
                 break;
