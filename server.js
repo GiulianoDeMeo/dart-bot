@@ -142,24 +142,48 @@ app.post('/api/slack/commands', async (req, res) => {
                     const loserEloBefore = loserEloHistory[1]?.elo || 1000;   // Wert vor dem Spiel
                     const loserEloAfter = loserEloHistory[0]?.elo || 1000;    // Wert nach dem Spiel
 
-                    // Berechne die Rankings vor und nach dem Spiel
-                    const oldRankings = await calculateRankings();
-                    const winnerOldRank = oldRankings[winner.name];
-                    const loserOldRank = oldRankings[loser.name];
+                    // Hole alle Spieler und ihre Elo-Historie
+                    const allPlayers = await Player.find();
                     
-                    // Simuliere das Spiel für neue Rankings
-                    const tempWinner = { ...winner.toObject() };
-                    const tempLoser = { ...loser.toObject() };
-                    updateEloRatings(tempWinner, tempLoser, game.date);
+                    // Berechne Rankings vor dem Spiel
+                    const playersBeforeGame = allPlayers.map(p => {
+                        const eloHistory = p.eloHistory
+                            .filter(entry => new Date(entry.date) < game.date)
+                            .sort((a, b) => new Date(b.date) - new Date(a.date));
+                        return {
+                            name: p.name,
+                            eloRating: eloHistory[0]?.elo || 1000
+                        };
+                    });
                     
-                    // Berechne neue Rankings
-                    const newRankings = await calculateRankings();
-                    const winnerNewRank = newRankings[winner.name];
-                    const loserNewRank = newRankings[loser.name];
+                    // Sortiere nach Elo für Rankings vor dem Spiel
+                    playersBeforeGame.sort((a, b) => b.eloRating - a.eloRating);
+                    const oldRankings = {};
+                    playersBeforeGame.forEach((player, index) => {
+                        oldRankings[player.name] = index + 1;
+                    });
+                    
+                    // Berechne Rankings nach dem Spiel
+                    const playersAfterGame = allPlayers.map(p => {
+                        const eloHistory = p.eloHistory
+                            .filter(entry => new Date(entry.date) <= game.date)
+                            .sort((a, b) => new Date(b.date) - new Date(a.date));
+                        return {
+                            name: p.name,
+                            eloRating: eloHistory[0]?.elo || 1000
+                        };
+                    });
+                    
+                    // Sortiere nach Elo für Rankings nach dem Spiel
+                    playersAfterGame.sort((a, b) => b.eloRating - a.eloRating);
+                    const newRankings = {};
+                    playersAfterGame.forEach((player, index) => {
+                        newRankings[player.name] = index + 1;
+                    });
                     
                     response += `• ${game.winner} hat gegen ${game.loser} gewonnen\n`;
-                    response += `  ${game.winner}: ${winnerEloBefore} → ${winnerEloAfter} Elo (Rang ${winnerOldRank} → ${winnerNewRank})\n`;
-                    response += `  ${game.loser}: ${loserEloBefore} → ${loserEloAfter} Elo (Rang ${loserOldRank} → ${loserNewRank})\n`;
+                    response += `  ${game.winner}: ${winnerEloBefore} → ${winnerEloAfter} Elo (Rang ${oldRankings[winner.name]} → ${newRankings[winner.name]})\n`;
+                    response += `  ${game.loser}: ${loserEloBefore} → ${loserEloAfter} Elo (Rang ${oldRankings[loser.name]} → ${newRankings[loser.name]})\n`;
                     response += `  Datum: ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}\n\n`;
                 }
                 break;
