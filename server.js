@@ -129,36 +129,15 @@ app.post('/api/slack/commands', async (req, res) => {
                         continue;
                     }
                     
-                    // Berechne Elo-Änderungen
-                    const kWinner = calculateKFactor(winner.gamesPlayed - 1);
-                    const kLoser = calculateKFactor(loser.gamesPlayed - 1);
-                    const expectedWinner = calculateExpectedScore(winner.eloRating, loser.eloRating);
-                    const expectedLoser = calculateExpectedScore(loser.eloRating, winner.eloRating);
-                    const eloChangeWinner = Math.round(kWinner * (1 - expectedWinner));
-                    const eloChangeLoser = Math.round(kLoser * (0 - expectedLoser));
-                    
-                    // Berechne Rangänderungen
-                    const oldRankings = await calculateRankings();
-                    const winnerOldRank = oldRankings[winner.name];
-                    const loserOldRank = oldRankings[loser.name];
-                    
-                    // Simuliere das Spiel für neue Rankings
-                    const tempWinner = { ...winner.toObject() };
-                    const tempLoser = { ...loser.toObject() };
-                    updateEloRatings(tempWinner, tempLoser, game.date);
-                    
-                    // Berechne neue Rankings
-                    const newRankings = await calculateRankings();
-                    const winnerNewRank = newRankings[winner.name];
-                    const loserNewRank = newRankings[loser.name];
-                    
-                    const winnerRankChange = winnerOldRank - winnerNewRank;
-                    const loserRankChange = loserOldRank - loserNewRank;
+                    // Berechne aktuelle Rankings
+                    const rankings = await calculateRankings();
+                    const winnerRank = rankings[winner.name];
+                    const loserRank = rankings[loser.name];
                     
                     response += `• ${game.winner} hat gegen ${game.loser} gewonnen\n`;
-                    response += `  ${game.winner}: ${winner.eloRating} → ${winner.eloRating + eloChangeWinner} Elo (Rang ${winnerOldRank} → ${winnerNewRank})\n`;
-                    response += `  ${game.loser}: ${loser.eloRating} → ${loser.eloRating + eloChangeLoser} Elo (Rang ${loserOldRank} → ${loserNewRank})\n`;
-                    response += `  Datum: ${game.date.toLocaleDateString('de-DE')} ${game.date.getHours().toString().padStart(2, '0')}:${game.date.getMinutes().toString().padStart(2, '0')}\n\n`;
+                    response += `  ${game.winner}: ${winner.eloRating} Elo (Rang ${winnerRank})\n`;
+                    response += `  ${game.loser}: ${loser.eloRating} Elo (Rang ${loserRank})\n`;
+                    response += `  Datum: ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}\n\n`;
                 }
                 break;
                 
@@ -210,7 +189,7 @@ app.post('/api/slack/commands', async (req, res) => {
                     for (const game of playerGames) {
                         const result = game.winner === playerName ? 'gewonnen' : 'verloren';
                         const opponent = game.winner === playerName ? game.loser : game.winner;
-                        response += `• ${game.date.toLocaleDateString('de-DE')} ${game.date.getHours().toString().padStart(2, '0')}:${game.date.getMinutes().toString().padStart(2, '0')} : ${result} gegen ${opponent}\n`;
+                        response += `• ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}: ${result} gegen ${opponent}\n`;
                     }
                 }
                 break;
