@@ -1,5 +1,4 @@
 .env
 .DS_Store
 node_modules/ 
-curso_accounts.txt
-hurricane-festival
+cursor_accounts.txt
