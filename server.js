@@ -711,8 +711,9 @@ app.post('/api/games', async (req, res) => {
             return res.status(404).json({ error: 'Spieler nicht gefunden' });
         }
         
-        // Erstelle das Spiel mit aktuellem Datum
-        const gameDate = new Date();
+        // Erstelle das Spiel mit aktuellem Datum in deutscher Zeitzone
+        const now = new Date();
+        const gameDate = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
         const game = new Game({
             winner,
             loser,
