@@ -711,14 +711,18 @@ app.post('/api/games', async (req, res) => {
             return res.status(404).json({ error: 'Spieler nicht gefunden' });
         }
         
-        // Erstelle das Spiel mit aktuellem Datum in deutscher Zeitzone
-        const now = new Date();
-        const gameDate = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
+        // Erstelle das Spiel mit aktuellem Datum
+        const gameDate = new Date();
+        // Konvertiere UTC zu deutscher Zeit (UTC+2)
+        const germanDate = new Date(gameDate.getTime() + (2 * 60 * 60 * 1000));
+        console.log('Neues Spiel wird gespeichert:');
+        console.log('UTC-Zeit:', gameDate.toISOString());
+        console.log('Deutsche Zeit (UTC+2):', germanDate.toISOString());
         const game = new Game({
             winner,
             loser,
             format,
-            date: gameDate
+            date: germanDate
         });
 
         // Sende Slack-Nachricht
