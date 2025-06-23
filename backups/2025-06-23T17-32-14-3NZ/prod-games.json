@@ -1,0 +1,1003 @@
+[
+  {
+    _id: ObjectId('67fe6bd5de88c5ef7b3be906'),
+    winner: 'Michael Haas',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-15T16:23:17.609Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67fe6dc7ef951d562c68c29f'),
+    winner: 'Michael Haas',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-15T16:31:35.670Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67fe6eafef951d562c68c2a8'),
+    winner: 'Maurice Calmano',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-15T16:35:27.102Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67fe7149ef951d562c68c2c1'),
+    winner: 'Maurice Calmano',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-15T16:46:33.237Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67fe7c9962f21d78a2231765'),
+    winner: 'Hannibal Wissing',
+    loser: 'Maurice Calmano',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-15T17:34:49.639Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67fe7e3cca03a5aa0bcf2c04'),
+    winner: 'Michael Haas',
+    loser: 'Nicolas Zander',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-15T17:41:48.044Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67fe7e59ca03a5aa0bcf2c19'),
+    winner: 'Hannibal Wissing',
+    loser: 'Kai Adrian Münzberg',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-15T17:42:17.248Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67fe8289a0372b8f81805906'),
+    winner: 'Paul von Allwörden',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-15T18:00:09.981Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ff5ee69ed894b6e50f005c'),
+    winner: 'Giuliano De Meo',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T09:40:22.138Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ff618a9ed894b6e50f006a'),
+    winner: 'Lars Emig',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T09:51:38.164Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ff6dfd9ed894b6e50f00b4'),
+    winner: 'Giuliano De Meo',
+    loser: 'Hannibal Wissing',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T10:44:45.344Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ff77789ed894b6e50f00c2'),
+    winner: 'Hannibal Wissing',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T11:25:12.299Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ff7e949ed894b6e50f00d0'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T11:55:32.560Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ff91789ed894b6e50f00e6'),
+    winner: 'Hannibal Wissing',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T13:16:08.082Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ff956c9ed894b6e50f00f4'),
+    winner: 'Paul von Allwörden',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T13:33:00.300Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ff97669ed894b6e50f011d'),
+    winner: 'Michael Haas',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T13:41:26.673Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffa5b59ed894b6e50f014f'),
+    winner: 'Hannibal Wissing',
+    loser: 'Lars Emig',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T14:42:29.726Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffa7de9ed894b6e50f0161'),
+    winner: 'Maurice Calmano',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T14:51:42.375Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffaef59ed894b6e50f018f'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T15:21:57.736Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffb10f9ed894b6e50f0199'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T15:30:55.819Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffbd549ed894b6e50f01c3'),
+    winner: 'Hannibal Wissing',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T16:23:16.836Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffc0239ed894b6e50f01d5'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Maurice Calmano',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T16:35:15.044Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffc2119ed894b6e50f01e3'),
+    winner: 'Michael Haas',
+    loser: 'Nicolas Zander',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T16:43:29.955Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffc7879ed894b6e50f01f9'),
+    winner: 'Michael Haas',
+    loser: 'Hannibal Wissing',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T17:06:47.396Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('67ffd1769ed894b6e50f0203'),
+    winner: 'Hannibal Wissing',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    format: { type: '501', legs: 3 },
+    date: ISODate('2025-04-16T17:49:10.262Z'),
+    __v: 0
+  },
+  {
+    _id: ObjectId('680f4c32dcee5bcce2e893a9'),
+    winner: 'Michael Haas',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-28T11:36:50.990Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('680f63a6dcee5bcce2e89633'),
+    winner: 'Michael Haas',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-28T13:16:54.609Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('680f6501dcee5bcce2e89bc1'),
+    winner: 'Giuliano De Meo',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-28T13:22:41.044Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('680f82fbdcee5bcce2e8a16c'),
+    winner: 'Michael Haas',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-28T15:30:35.259Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('680f93d6dcee5bcce2e8a5a2'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-28T16:42:30.689Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681076724577ce7472de3ab0'),
+    winner: 'Giuliano De Meo',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T08:49:22.720Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810a8414577ce7472de4099'),
+    winner: 'Hannibal Wissing',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T12:21:53.433Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810af3e4577ce7472de435c'),
+    winner: 'Giuliano De Meo',
+    loser: 'Lars Emig',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T12:51:42.395Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810b5524577ce7472de47c1'),
+    winner: 'Lars Emig',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T13:17:38.859Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810b8734577ce7472de4a9c'),
+    winner: 'Michael Haas',
+    loser: 'Nicolas Zander',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T13:30:59.725Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810bcc54577ce7472de4d80'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T13:49:25.268Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810bfd44577ce7472de5741'),
+    winner: 'Michael Haas',
+    loser: 'Nicolas Zander',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T14:02:28.077Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810c39d4577ce7472de5beb'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Philipp Seemann',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T14:18:37.721Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810d6fa73de8ea665e26834'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T15:41:14.910Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810d8b773de8ea665e2725f'),
+    winner: 'Maurice Calmano',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T15:48:39.610Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810da8373de8ea665e27736'),
+    winner: 'Nicolas Zander',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T15:56:19.740Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810dcad73de8ea665e28199'),
+    winner: 'Hannibal Wissing',
+    loser: 'Philipp Seemann',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T16:05:33.894Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810ef3c73de8ea665e2869d'),
+    winner: 'Giuliano De Meo',
+    loser: 'Maurice Calmano',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T17:24:44.395Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6810f04a73de8ea665e289d3'),
+    winner: 'Hannibal Wissing',
+    loser: 'Maurice Calmano',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-29T17:29:14.105Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6811e81073de8ea665e294a5'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T11:06:24.890Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6811e99273de8ea665e299d6'),
+    winner: 'Giuliano De Meo',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T11:12:50.494Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6811fce173de8ea665e2a440'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T12:35:13.774Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6812023273de8ea665e2ab7f'),
+    winner: 'Lars Emig',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T12:57:54.126Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681204df73de8ea665e2b0d6'),
+    winner: 'Kai Adrian Münzberg',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T13:09:19.278Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('68120d0673de8ea665e2b44d'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T13:44:06.925Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('68121e5973de8ea665e2bbda'),
+    winner: 'Fabian Berres',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T14:58:01.357Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6812203473de8ea665e2bf57'),
+    winner: 'Fabian Berres',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T15:05:56.450Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681223888ef5d66f58513a7b'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T15:20:08.137Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6812251c8ef5d66f58514039'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T15:26:52.823Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681233098ef5d66f585145fd'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T16:26:17.762Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681235518ef5d66f58515236'),
+    winner: 'Jonathan Schad',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T16:36:01.394Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('68124d438ef5d66f58515c67'),
+    winner: 'Paul von Allwörden',
+    loser: 'Jonathan Schad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-04-30T18:18:11.159Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6814bd308c9e8c82b04303e7'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Norman Schirg',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-02T14:40:16.047Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6814c0d98c9e8c82b04307c0'),
+    winner: 'Giuliano De Meo',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-02T14:55:53.894Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681873b3c6ca01fc0b3eec78'),
+    winner: 'Giuliano De Meo',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-05T10:15:47.261Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('68187a41c6ca01fc0b3ef4f2'),
+    winner: 'Michael Haas',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-05T10:43:45.622Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6818892dc6ca01fc0b3efb3b'),
+    winner: 'Giuliano De Meo',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-05T11:47:25.362Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('68188bd7c6ca01fc0b3eff3d'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-05T11:58:47.855Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('68188d76c6ca01fc0b3f0351'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-05T12:05:42.229Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6818c111c6ca01fc0b3f1336'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-05T15:45:53.023Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6819b9c80248a9b0410add53'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-06T09:27:04.228Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6819d2260248a9b0410ae3eb'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-06T11:11:02.850Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6819f5a60248a9b0410af1d1'),
+    winner: 'Lars Emig',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-06T13:42:30.618Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681a1bda0248a9b0410af87c'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Lars Emig',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-06T16:25:30.027Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681b07d64bd61b4f08412cbd'),
+    winner: 'Fabian Berres',
+    loser: 'Giuliano De Meo',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T09:12:22.294Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681b17123b5c70d844501ad5'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T10:17:22.731Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681b2e723b5c70d84450243a'),
+    winner: 'Fabian Berres',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T11:57:06.771Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681b41f03b5c70d844502b17'),
+    winner: 'Fabian Berres',
+    loser: 'Kai Adrian Münzberg',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T13:20:16.463Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681b59353b5c70d8445034b8'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T14:59:33.836Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681b5f2a3b5c70d844504cfe'),
+    winner: 'Lars Emig',
+    loser: 'Philipp Seemann',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T15:24:58.293Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681b62863b5c70d84450586a'),
+    winner: 'Kai Adrian Münzberg',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T15:39:18.559Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bc6653b5c70d844505f8b'),
+    winner: 'Fabian Berres',
+    loser: 'Kai Adrian Münzberg',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T22:45:25.571Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bc9093b5c70d844506421'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T22:56:41.158Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bcac63b5c70d8445068c7'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T23:04:06.277Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bcf8a3b5c70d844506d63'),
+    winner: 'Paul von Allwörden',
+    loser: 'Lars Emig',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T23:24:26.558Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bd15a3b5c70d84450721f'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T23:32:10.295Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bd4743b5c70d8445076e2'),
+    winner: 'Paul von Allwörden',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-07T23:45:24.020Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bd8d53b5c70d844507e6b'),
+    winner: 'Fabian Berres',
+    loser: 'Lars Emig',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T00:04:05.979Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bdddc3b5c70d844508606'),
+    winner: 'Paul von Allwörden',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T00:25:32.737Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681be1ab3b5c70d844508ade'),
+    winner: 'Lars Emig',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T00:41:47.505Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681be3653b5c70d844508fc2'),
+    winner: 'Lars Emig',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T00:49:09.028Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681beca63b5c70d8445094ba'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T01:28:38.908Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bf2983b5c70d8445099b4'),
+    winner: 'Fabian Berres',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T01:54:00.584Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bf5b13b5c70d844509eba'),
+    winner: 'Fabian Berres',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T02:07:13.426Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681bf81d3b5c70d84450a3cc'),
+    winner: 'Fabian Berres',
+    loser: 'Paul von Allwörden',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T02:17:33.763Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681c8afd49552fcf7ef7b0ea'),
+    winner: 'Giuliano De Meo',
+    loser: 'Fabian Berres',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T12:44:13.602Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681cbcc249552fcf7ef7b908'),
+    winner: 'Michael Haas',
+    loser: 'Nicolas Zander',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-08T16:16:34.666Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681dc52b49552fcf7ef7c13e'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Lars Emig',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-09T11:04:43.599Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681de7f803489631cb171a49'),
+    winner: 'Michael Haas',
+    loser: 'Sebastian Volker Nieraad',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-09T13:33:12.774Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681dfc9b03489631cb171f94'),
+    winner: 'Lars Emig',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-09T15:01:15.375Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681e041403489631cb172e38'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-09T15:33:08.910Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('681e191103489631cb173cfa'),
+    winner: 'Michael Haas',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-09T17:02:41.548Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6821b9c2f60c7782319c3aa4'),
+    winner: 'Sebastian Volker Nieraad',
+    loser: 'Clemens Brockschmidt',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-12T11:05:06.342Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6821c8b2f60c7782319c53b8'),
+    winner: 'Giuliano De Meo',
+    loser: 'Maurice Calmano',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-12T12:08:50.075Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  {
+    _id: ObjectId('6822fe814f0b1b9343d649ea'),
+    winner: 'Clemens Brockschmidt',
+    loser: 'Michael Haas',
+    players: [],
+    isMultiplayer: false,
+    date: ISODate('2025-05-13T10:10:41.746Z'),
+    format: { type: '501', legs: 3 },
+    __v: 0
+  },
+  ... 227 more items
+]
