@@ -261,10 +261,29 @@ function updateTopPlayers() {
         const bestPlayer = players.find(p => p.name === bestWeeklyPlayer);
         if (bestPlayer) {
             console.log('Füge besten Spieler der Woche als zusätzliche Zeile hinzu:', bestPlayer.name);
+            
+            // Finde den tatsächlichen Rang des Spielers
+            const allPlayersSorted = players
+                .filter(player => player.gamesPlayed > 0)
+                .sort((a, b) => {
+                    if (b.eloRating !== a.eloRating) {
+                        return b.eloRating - a.eloRating;
+                    }
+                    return parseFloat(b.winRate) - parseFloat(a.winRate);
+                });
+            
+            const actualRank = allPlayersSorted.findIndex(p => p.name === bestPlayer.name) + 1;
+            
+            // Füge eine doppelte Trennlinie hinzu
+            const separatorRow = document.createElement('tr');
+            separatorRow.innerHTML = `
+                <td colspan="7" style="border-top: 3px double #ccc; padding: 5px 0;"></td>
+            `;
+            tableBody.appendChild(separatorRow);
+            
             const row = document.createElement('tr');
-            row.style.backgroundColor = '#fff3cd'; // Hervorhebung für Spieler der Woche
             row.innerHTML = `
-                <td>-</td>
+                <td>#${actualRank}</td>
                 <td><a href="#" class="player-link" data-player="${bestPlayer.name}">${bestPlayer.name} 👑</a></td>
                 <td class="elo-rating">${bestPlayer.eloRating}</td>
                 <td>${bestPlayer.gamesPlayed}</td>
