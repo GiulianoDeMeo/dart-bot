@@ -225,6 +225,10 @@ function updateTopPlayers() {
         })
         .slice(0, 10);
     
+    // Debug: Zeige die Top 10 Spieler
+    console.log('Top 10 Spieler:', activePlayers.map(p => p.name));
+    console.log('Ist bester Spieler der Woche in Top 10?', activePlayers.some(p => p.name === bestWeeklyPlayer));
+    
     activePlayers.forEach((player, index) => {
         const row = document.createElement('tr');
         let playerName = player.name;
@@ -237,6 +241,7 @@ function updateTopPlayers() {
         // Füge die Krone für den besten Spieler der Woche hinzu
         if (player.name === bestWeeklyPlayer) {
             playerName += ' 👑';
+            console.log('Krone hinzugefügt für:', player.name);
         }
         
         row.innerHTML = `
@@ -250,6 +255,41 @@ function updateTopPlayers() {
         `;
         tableBody.appendChild(row);
     });
+
+    // Wenn der beste Spieler der Woche nicht in der Top 10 ist, füge ihn als zusätzliche Zeile hinzu
+    if (bestWeeklyPlayer && !activePlayers.some(p => p.name === bestWeeklyPlayer)) {
+        const bestPlayer = players.find(p => p.name === bestWeeklyPlayer);
+        if (bestPlayer) {
+            console.log('Füge besten Spieler der Woche als zusätzliche Zeile hinzu:', bestPlayer.name);
+            const row = document.createElement('tr');
+            row.style.backgroundColor = '#fff3cd'; // Hervorhebung für Spieler der Woche
+            row.innerHTML = `
+                <td>-</td>
+                <td><a href="#" class="player-link" data-player="${bestPlayer.name}">${bestPlayer.name} 👑</a></td>
+                <td class="elo-rating">${bestPlayer.eloRating}</td>
+                <td>${bestPlayer.gamesPlayed}</td>
+                <td>${bestPlayer.wins}</td>
+                <td>${bestPlayer.losses}</td>
+                <td>${bestPlayer.winRate}%</td>
+            `;
+            tableBody.appendChild(row);
+            
+            // Event Listener für den zusätzlichen Spieler
+            row.querySelector('.player-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                const playerName = e.target.dataset.player;
+                
+                // Wechsle zur Einzelspieler-Ansicht
+                statsViewSelect.value = 'player';
+                top10Container.style.display = 'none';
+                playerStatsContainer.style.display = 'block';
+                playerStatsContainer.classList.add('active');
+                
+                // Zeige die Statistiken des ausgewählten Spielers
+                showPlayerStats(playerName);
+            });
+        }
+    }
 
     // Füge Event-Listener für die Spielerlinks hinzu
     tableBody.querySelectorAll('.player-link').forEach(link => {
