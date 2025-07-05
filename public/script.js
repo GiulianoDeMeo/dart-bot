@@ -212,9 +212,9 @@ function updateTopPlayers() {
 
     console.log('Bester Spieler der Woche:', bestWeeklyPlayer, 'mit Verbesserung:', maxImprovement);
 
-    // Filtere Spieler mit mindestens einem Spiel und sortiere nach Elo-Rating
+    // Filtere Spieler mit mindestens 10 Spielen und sortiere nach Elo-Rating
     const activePlayers = players
-        .filter(player => player.gamesPlayed > 0)
+        .filter(player => player.gamesPlayed >= 10)
         .sort((a, b) => {
             // Zuerst nach Elo-Rating
             if (b.eloRating !== a.eloRating) {
@@ -264,7 +264,7 @@ function updateTopPlayers() {
             
             // Finde den tatsächlichen Rang des Spielers
             const allPlayersSorted = players
-                .filter(player => player.gamesPlayed > 0)
+                .filter(player => player.gamesPlayed >= 10)
                 .sort((a, b) => {
                     if (b.eloRating !== a.eloRating) {
                         return b.eloRating - a.eloRating;
