@@ -655,35 +655,28 @@ async function calculateRankings() {
         });
         
         // Sortiere nach:
-        // 1. Spieler mit Spielen kommen zuerst
-        // 2. Elo-Rating (absteigend)
-        // 3. Anzahl der Siege (absteigend)
-        // 4. Siegesquote (absteigend)
-        const sortedPlayers = playerStats.sort((a, b) => {
-            // Zuerst nach Spielerfahrung
-            const aHasGames = a.totalGames > 0;
-            const bHasGames = b.totalGames > 0;
-            
-            if (aHasGames !== bHasGames) {
-                return bHasGames - aHasGames; // Spieler mit Spielen kommen nach vorne
-            }
-            
-            // Wenn beide Spieler Spiele haben, nach Elo sortieren
-            if (aHasGames && bHasGames) {
+        // 1. Erst alle Spieler mit ≥10 Spielen (nach Elo sortiert)
+        // 2. Dann alle Spieler mit <10 Spielen (nach Elo sortiert)
+        const qualifiedPlayers = playerStats
+            .filter(player => player.totalGames >= 10)
+            .sort((a, b) => {
                 if (b.eloRating !== a.eloRating) {
                     return b.eloRating - a.eloRating;
                 }
-                // Bei gleichem Elo nach Siegen
-                if (b.wins !== a.wins) {
-                    return b.wins - a.wins;
-                }
-                // Bei gleichen Siegen nach Siegesquote
                 return b.winRate - a.winRate;
-            }
-            
-            // Wenn beide keine Spiele haben, nach Elo sortieren
-            return b.eloRating - a.eloRating;
-        });
+            });
+        
+        const unqualifiedPlayers = playerStats
+            .filter(player => player.totalGames < 10)
+            .sort((a, b) => {
+                if (b.eloRating !== a.eloRating) {
+                    return b.eloRating - a.eloRating;
+                }
+                return b.winRate - a.winRate;
+            });
+        
+        // Kombiniere beide Listen: Erst qualifizierte, dann unqualifizierte
+        const sortedPlayers = [...qualifiedPlayers, ...unqualifiedPlayers];
         
         // Erstelle ein Mapping von Spielername zu Rang
         const rankings = {};
