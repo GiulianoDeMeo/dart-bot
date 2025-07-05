@@ -212,18 +212,30 @@ function updateTopPlayers() {
 
     console.log('Bester Spieler der Woche:', bestWeeklyPlayer, 'mit Verbesserung:', maxImprovement);
 
-    // Filtere Spieler mit mindestens 10 Spielen und sortiere nach Elo-Rating
-    const activePlayers = players
+    // Sortiere Spieler: Erst alle mit ≥10 Spielen, dann alle mit <10 Spielen
+    const qualifiedPlayers = players
         .filter(player => player.gamesPlayed >= 10)
         .sort((a, b) => {
-            // Zuerst nach Elo-Rating
             if (b.eloRating !== a.eloRating) {
                 return b.eloRating - a.eloRating;
             }
-            // Bei gleichem Elo nach Siegesquote
             return parseFloat(b.winRate) - parseFloat(a.winRate);
-        })
-        .slice(0, 10);
+        });
+    
+    const unqualifiedPlayers = players
+        .filter(player => player.gamesPlayed < 10)
+        .sort((a, b) => {
+            if (b.eloRating !== a.eloRating) {
+                return b.eloRating - a.eloRating;
+            }
+            return parseFloat(b.winRate) - parseFloat(a.winRate);
+        });
+    
+    // Kombiniere beide Listen: Erst qualifizierte, dann unqualifizierte
+    const allPlayersSorted = [...qualifiedPlayers, ...unqualifiedPlayers];
+    
+    // Top 10 sind nur die ersten 10 (alle qualifiziert)
+    const activePlayers = allPlayersSorted.slice(0, 10);
     
     // Debug: Zeige die Top 10 Spieler
     console.log('Top 10 Spieler:', activePlayers.map(p => p.name));
@@ -263,15 +275,6 @@ function updateTopPlayers() {
             console.log('Füge besten Spieler der Woche als zusätzliche Zeile hinzu:', bestPlayer.name);
             
             // Finde den tatsächlichen Rang des Spielers
-            const allPlayersSorted = players
-                .filter(player => player.gamesPlayed >= 10)
-                .sort((a, b) => {
-                    if (b.eloRating !== a.eloRating) {
-                        return b.eloRating - a.eloRating;
-                    }
-                    return parseFloat(b.winRate) - parseFloat(a.winRate);
-                });
-            
             const actualRank = allPlayersSorted.findIndex(p => p.name === bestPlayer.name) + 1;
             
             // Füge eine doppelte Trennlinie hinzu
