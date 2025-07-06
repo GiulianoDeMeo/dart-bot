@@ -19,11 +19,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // MongoDB Verbindung
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.NODE_ENV === 'development' 
+    ? process.env.MONGODB_URI_TEST 
+    : process.env.MONGODB_URI;
 
 console.log('Versuche Verbindung zur MongoDB herzustellen...');
 console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Vorhanden' : 'Fehlt');
+console.log('MongoDB URI Test:', process.env.MONGODB_URI_TEST ? 'Vorhanden' : 'Fehlt');
 console.log('Umgebung:', process.env.NODE_ENV || 'production');
+console.log('Verwende Datenbank:', process.env.NODE_ENV === 'development' ? 'TEST' : 'PRODUKTION');
 
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
@@ -34,6 +38,7 @@ mongoose.connect(MONGODB_URI, {
     console.log('Datenbank:', db.databaseName);
     console.log('Host:', mongoose.connection.host);
     console.log('Verbundene Datenbank:', db.databaseName);
+    console.log('Umgebung:', process.env.NODE_ENV === 'development' ? 'ENTWICKLUNG' : 'PRODUKTION');
 }).catch(err => {
     console.error('Fehler bei der MongoDB Verbindung:', err);
     console.error('Details:', {
