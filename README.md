@@ -11,6 +11,7 @@ npm run dev
 - Verwendet `test-database` in MongoDB Atlas
 - Automatischer Neustart bei Code-Änderungen
 - Lokaler Server auf Port 3001
+- Slack-Integration: Test-Channel `#test`
 - Sichere Entwicklung ohne Live-Daten zu beeinträchtigen
 
 ### Produktion (Live-Datenbank)
@@ -19,26 +20,24 @@ npm run prod
 ```
 - Verwendet `dart-stats` in MongoDB Atlas
 - Für Live-Deployment auf Heroku
+- Slack-Integration: Produktions-Channel
 
-## 🔧 Umgebung einrichten
+## 🔧 Installation
 
 ### 1. Dependencies installieren
 ```bash
 npm install
 ```
 
-### 2. .env Datei konfigurieren
-```env
-# MongoDB Verbindungen
-# Produktions-Datenbank (Live-System) - wird von Heroku bereitgestellt
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/dart-stats
+### 2. Umgebungsvariablen konfigurieren
+Die `.env` Datei wird automatisch aus der `.env.example` erstellt. Für lokale Entwicklung:
 
-# Test-Datenbank (Entwicklung)
+```env
+# MongoDB Test-Datenbank (Entwicklung)
 MONGODB_URI_TEST=mongodb+srv://dart-bot-app:xhfbGnfII6WhJKEA@pickware.biz4mzw.mongodb.net/test-database
 
-# Slack Integration
+# Slack Integration (Entwicklung)
 SLACK_TOKEN=your_slack_token_here
-SLACK_CHANNEL=#your_channel_name
 
 # Server Port
 PORT=3001
@@ -46,6 +45,8 @@ PORT=3001
 # Umgebung
 NODE_ENV=development
 ```
+
+**Hinweis:** Produktions-Umgebungsvariablen werden über Heroku Config Vars verwaltet.
 
 ## 📊 Datenbankstruktur
 
@@ -69,14 +70,11 @@ NODE_ENV=development
    - Sichere Entwicklung ohne Live-Daten zu beeinträchtigen
    - API verfügbar unter `http://localhost:3001/api/players`
 
-3. **Deployment:**
-   ```bash
-   git add .
-   git commit -m "Update: Beschreibung der Änderungen"
-   git push heroku main
-   ```
-   - Heroku verwendet automatisch Produktions-Datenbank
-   - Live-App verfügbar unter: https://dart-bot-stats.herokuapp.com
+3. **Feature entwickeln:**
+   - Lokal testen
+   - Code committen: `git add . && git commit -m "Feature: Beschreibung"`
+   - In beide GitHub Repos pushen: `git push origin main && git push pickware main`
+   - Auf Heroku deployen: `git push heroku main`
 
 ## 📝 Verfügbare Scripts
 
@@ -116,7 +114,7 @@ NODE_ENV=development
 - **Test-Datenbank:** ✅ Funktioniert (test-database)
 - **Produktions-Datenbank:** ✅ Funktioniert (dart-stats auf Heroku)
 - **Automatische Umgebungsauswahl:** ✅ Implementiert
-- **Slack-Integration:** ✅ Aktiv
+- **Slack-Integration:** ✅ Aktiv (automatische Channel-Auswahl)
 
 ## 📈 Aktuelle Statistiken
 
@@ -124,7 +122,7 @@ Die App verwaltet aktuell:
 - **Spieler:** 50+ Dart-Spieler
 - **Spiele:** 200+ gespielte Matches
 - **Elo-System:** Dynamische Rating-Berechnung
-- **Slack-Integration:** Automatische Benachrichtigungen 
+- **Slack-Integration:** Automatische Benachrichtigungen
 
 ## 🚀 Deployment Workflow
 
@@ -164,7 +162,7 @@ git push heroku main
 ```
 
 ### **Umgebungen:**
-- **Entwicklung**: `NODE_ENV=development` → Test-Datenbank + Test-Slack-Channel
+- **Entwicklung**: `NODE_ENV=development` → Test-Datenbank + Test-Slack-Channel (`#test`)
 - **Produktion**: `NODE_ENV=production` → Produktions-Datenbank + Produktions-Slack-Channel
 
 ### **Wichtige URLs:**
