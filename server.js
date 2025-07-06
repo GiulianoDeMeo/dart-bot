@@ -98,6 +98,16 @@ const Game = mongoose.model('Game', gameSchema);
 // Slack Client initialisieren
 const slack = new WebClient(process.env.SLACK_TOKEN);
 
+// Automatische Channel-Auswahl basierend auf Umgebung
+const SLACK_CHANNEL = process.env.NODE_ENV === 'development' 
+    ? 'C08KHRA79S8'  // Entwicklung: Öffentlicher Test-Channel (ID)
+    : process.env.SLACK_CHANNEL || '#dart-stats';  // Produktion: aus Umgebungsvariable oder Standard
+
+console.log('Slack-Konfiguration:');
+console.log('Umgebung:', process.env.NODE_ENV);
+console.log('Verwende Channel:', SLACK_CHANNEL);
+console.log('Token vorhanden:', !!process.env.SLACK_TOKEN);
+
 // Slash-Command Endpunkte
 app.post('/api/slack/commands', async (req, res) => {
     try {
@@ -725,10 +735,16 @@ app.post('/api/games', async (req, res) => {
 
         // Sende Slack-Nachricht
         try {
+            console.log('=== Slack-Nachricht wird vorbereitet ===');
+            console.log('Channel ID:', SLACK_CHANNEL);
+            console.log('Token vorhanden:', !!process.env.SLACK_TOKEN);
+            
             // Berechne die alten Rankings
             const oldRankings = await calculateRankings();
             const winnerOldRank = oldRankings[winner];
             const loserOldRank = oldRankings[loser];
+            
+            console.log('Alte Rankings:', { winner: winnerOldRank, loser: loserOldRank });
             
             // Update Elo Ratings mit Spiel-Datum
             updateEloRatings(winnerPlayer, loserPlayer, gameDate);
@@ -745,6 +761,8 @@ app.post('/api/games', async (req, res) => {
             const winnerNewRank = newRankings[winner];
             const loserNewRank = newRankings[loser];
             
+            console.log('Neue Rankings:', { winner: winnerNewRank, loser: loserNewRank });
+            
             // Berechne die Rangänderungen
             const winnerRankChange = winnerOldRank - winnerNewRank; // Positiv = Verbesserung
             const loserRankChange = loserOldRank - loserNewRank; // Negativ = Verschlechterung
@@ -759,12 +777,22 @@ app.post('/api/games', async (req, res) => {
             const message = `${winner} (Rang: ${winnerNewRank} | ${formatRankChange(winnerRankChange)}) hat gegen ${loser} (Rang: ${loserNewRank} | ${formatRankChange(loserRankChange)}) gewonnen! :dart:`;
             console.log('Sende Slack-Nachricht:', message);
             
-            await slack.chat.postMessage({
-                channel: process.env.SLACK_CHANNEL,
+            const slackResponse = await slack.chat.postMessage({
+                channel: SLACK_CHANNEL,
                 text: message
             });
+            
+            console.log('Slack-Antwort erhalten:', slackResponse);
+            console.log('=== Slack-Nachricht erfolgreich gesendet ===');
         } catch (slackError) {
-            console.error('Fehler beim Senden der Slack-Nachricht:', slackError);
+            console.error('=== Fehler beim Senden der Slack-Nachricht ===');
+            console.error('Fehler-Details:', {
+                message: slackError.message,
+                code: slackError.code,
+                status: slackError.status,
+                data: slackError.data
+            });
+            console.error('Vollständiger Fehler:', slackError);
         }
 
         res.status(201).json(game);

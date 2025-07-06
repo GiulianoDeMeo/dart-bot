@@ -28,7 +28,7 @@ let isSubmitting = false; // Globale Variable für die Sperre
 
 // API URL - Nutze die lokale URL für Entwicklung
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '192.168.2.107'
-    ? `http://${window.location.hostname}:3000/api`
+    ? `http://${window.location.hostname}:3001/api`
     : 'https://dart-bot-stats-40bf895a4f48.herokuapp.com/api';
 
 // Lade initiale Daten
