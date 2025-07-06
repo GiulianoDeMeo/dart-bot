@@ -1,4 +1,32 @@
+# Environment variables
 .env
+
+# Dependencies
+node_modules/
+
+# System files
 .DS_Store
-node_modules/ 
-cursor_accounts.txt
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Temporary folders
+tmp/
+temp/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
