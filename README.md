@@ -125,3 +125,55 @@ Die App verwaltet aktuell:
 - **Spiele:** 200+ gespielte Matches
 - **Elo-System:** Dynamische Rating-Berechnung
 - **Slack-Integration:** Automatische Benachrichtigungen 
+
+## 🚀 Deployment Workflow
+
+### **Entwicklungs-Workflow:**
+1. **Feature entwickeln** → Lokal testen
+2. **Code committen** → `git add . && git commit -m "Beschreibung"`
+3. **In beide GitHub Repos pushen** → `git push origin main && git push pickware main`
+4. **Auf Heroku deployen** → `git push heroku main`
+5. **Produktion testen** → https://dart-bot-stats-40bf895a4f48.herokuapp.com/
+
+### **Git Remote Konfiguration:**
+```bash
+# Persönliches Repository
+origin    https://github.com/GiulianoDeMeo/dart-bot.git
+
+# Pickware Repository  
+pickware  https://github.com/pickware/dart-bot.git
+
+# Heroku Production
+heroku    https://git.heroku.com/dart-bot-stats.git
+```
+
+### **Deployment-Befehle:**
+```bash
+# 1. Änderungen stagen
+git add .
+
+# 2. Committen mit aussagekräftiger Nachricht
+git commit -m "Feature: Beschreibung der Änderungen"
+
+# 3. In beide GitHub Repositories pushen
+git push origin main
+git push pickware main
+
+# 4. Auf Heroku deployen
+git push heroku main
+```
+
+### **Umgebungen:**
+- **Entwicklung**: `NODE_ENV=development` → Test-Datenbank + Test-Slack-Channel
+- **Produktion**: `NODE_ENV=production` → Produktions-Datenbank + Produktions-Slack-Channel
+
+### **Wichtige URLs:**
+- **Lokale Entwicklung**: http://localhost:3001
+- **Produktion**: https://dart-bot-stats-40bf895a4f48.herokuapp.com/
+- **GitHub (persönlich)**: https://github.com/GiulianoDeMeo/dart-bot
+- **GitHub (Pickware)**: https://github.com/pickware/dart-bot
+
+### **Troubleshooting:**
+- **Port belegt**: `lsof -ti:3001 | xargs kill -9`
+- **Heroku Logs**: `heroku logs --tail`
+- **Heroku Status**: `heroku ps` 
