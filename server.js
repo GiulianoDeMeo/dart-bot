@@ -70,7 +70,9 @@ const playerSchema = new mongoose.Schema({
     eloHistory: [{
         elo: { type: Number, required: true },
         date: { type: Date, required: true }
-    }]
+    }],
+    wins: { type: Number, default: 0 }, // Hinzugefügt für die neue Route
+    losses: { type: Number, default: 0 } // Hinzugefügt für die neue Route
 });
 
 // Spiel Schema
@@ -574,26 +576,22 @@ async function recalculateEloRatings() {
 app.get('/api/players', async (req, res) => {
     try {
         const players = await Player.find();
-        const games = await Game.find();
         
-        // Berechne Statistiken für jeden Spieler
+        // Verwende die gespeicherten Werte aus der Datenbank
         const playerStats = players.map(player => {
-            const playerGames = games.filter(game => 
-                game.winner === player.name || game.loser === player.name
-            );
-            
-            const wins = playerGames.filter(game => game.winner === player.name).length;
-            const losses = playerGames.filter(game => game.loser === player.name).length;
-            const totalGames = wins + losses;
+            const wins = player.wins || 0;
+            const losses = player.losses || 0;
+            const totalGames = player.gamesPlayed || 0;
             const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : '0';
             
             return {
                 ...player.toObject(),
                 wins,
                 losses,
+                gamesPlayed: totalGames,
                 winRate
             };
-        }); // Entferne den Filter für Spieler mit mindestens einem Spiel
+        });
         
         res.json(playerStats);
     } catch (error) {
