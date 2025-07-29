@@ -526,17 +526,42 @@ function updateEloRatings(winner, loser, gameDate) {
     const expectedWinner = calculateExpectedScore(winnerElo, loserElo);
     const expectedLoser = calculateExpectedScore(loserElo, winnerElo);
     
-    // Update Ratings
-    winner.eloRating = Math.round(winnerElo + kWinner * (1 - expectedWinner));
-    loser.eloRating = Math.round(loserElo + kLoser * (0 - expectedLoser));
+    // Berechne Elo-Änderungen
+    const winnerChange = Math.round(kWinner * (1 - expectedWinner));
+    const loserChange = Math.round(kLoser * (0 - expectedLoser));
     
-    // Update Spieleanzahl
+    // Update Ratings
+    winner.eloRating = Math.round(winnerElo + winnerChange);
+    loser.eloRating = Math.round(loserElo + loserChange);
+    
+    // Update Spieleanzahl und Siege/Niederlagen
     winner.gamesPlayed += 1;
     loser.gamesPlayed += 1;
+    winner.wins += 1;
+    loser.losses += 1;
     
-    // Füge neue Elo-Werte zur Historie hinzu
-    winner.eloHistory.push({ elo: winner.eloRating, date: gameDate });
-    loser.eloHistory.push({ elo: loser.eloRating, date: gameDate });
+    // Füge neue Elo-Werte zur Historie hinzu (NEUES FORMAT)
+    winner.eloHistory.push({ 
+        elo: winner.eloRating, 
+        date: gameDate,
+        change: winnerChange,
+        opponent: loser.name,
+        result: 'win',
+        gamesPlayed: winner.gamesPlayed,
+        wins: winner.wins,
+        losses: winner.losses
+    });
+    
+    loser.eloHistory.push({ 
+        elo: loser.eloRating, 
+        date: gameDate,
+        change: loserChange,
+        opponent: winner.name,
+        result: 'loss',
+        gamesPlayed: loser.gamesPlayed,
+        wins: loser.wins,
+        losses: loser.losses
+    });
 }
 
 // Funktion zum Zurücksetzen und Neuberechnen der Elo-Ratings
@@ -546,6 +571,8 @@ async function recalculateEloRatings() {
         await Player.updateMany({}, { 
             eloRating: 1000,
             gamesPlayed: 0,
+            wins: 0,
+            losses: 0,
             eloHistory: [{ elo: 1000, date: new Date(0) }] // Initialer Eintrag
         });
         
