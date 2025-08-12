@@ -136,6 +136,37 @@ app.post('/api/slack/commands', async (req, res) => {
                 
                 console.log('Gefundene Spiele:', lastGames.length);
                 
+                // Lade alle Spieler einmal (zur Rangrekonstruktion)
+                const allPlayersForRanks = await Player.find();
+
+                // Hilfsfunktion: Ränge zum Zeitpunkt X nur anhand Elo-Historie bestimmen
+                const getRanksAtDate = (players, cutoffDate) => {
+                    const snapshot = players.map(p => {
+                        const historyUpToDate = (p.eloHistory || [])
+                            .filter(entry => new Date(entry.date) <= cutoffDate)
+                            .sort((a, b) => new Date(b.date) - new Date(a.date));
+                        const eloAtDate = historyUpToDate[0]?.elo ?? 1000;
+                        const gamesAtDate = historyUpToDate[0]?.gamesPlayed ?? 0;
+                        return { name: p.name, elo: eloAtDate, gamesPlayed: gamesAtDate };
+                    });
+
+                    // Sortierung: erst Spieler mit >=10 Spielen, dann <10; jeweils nach Elo absteigend
+                    snapshot.sort((a, b) => {
+                        const aExperienced = a.gamesPlayed >= 10;
+                        const bExperienced = b.gamesPlayed >= 10;
+                        if (aExperienced !== bExperienced) {
+                            return aExperienced ? -1 : 1;
+                        }
+                        return b.elo - a.elo;
+                    });
+
+                    const rankMap = {};
+                    snapshot.forEach((p, index) => {
+                        rankMap[p.name] = index + 1;
+                    });
+                    return rankMap;
+                };
+                
                 response = '*Letzte 3 Spiele:*\n';
                 for (const game of lastGames) {
                     const winner = await Player.findOne({ name: game.winner });
@@ -146,7 +177,7 @@ app.post('/api/slack/commands', async (req, res) => {
                         continue;
                     }
                     
-                    // Finde die Elo-Werte vor und nach dem Spiel
+                    // Elo vor/nach dem Spiel aus Historie bestimmen
                     const winnerEloHistory = winner.eloHistory
                         .filter(entry => new Date(entry.date) <= game.date)
                         .sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -154,131 +185,18 @@ app.post('/api/slack/commands', async (req, res) => {
                         .filter(entry => new Date(entry.date) <= game.date)
                         .sort((a, b) => new Date(b.date) - new Date(a.date));
                     
-                    const winnerEloBefore = winnerEloHistory[1]?.elo || 1000; // Wert vor dem Spiel
                     const winnerEloAfter = winnerEloHistory[0]?.elo || 1000;  // Wert nach dem Spiel
-                    const loserEloBefore = loserEloHistory[1]?.elo || 1000;   // Wert vor dem Spiel
+                    const winnerEloBefore = winnerEloHistory[1]?.elo || 1000; // Wert vor dem Spiel
                     const loserEloAfter = loserEloHistory[0]?.elo || 1000;    // Wert nach dem Spiel
+                    const loserEloBefore = loserEloHistory[1]?.elo || 1000;   // Wert vor dem Spiel
 
-                    // Hole alle Spieler und ihre Spiele
-                    const allPlayers = await Player.find();
-                    const allGames = await Game.find();
-                    
-                    // Berechne Rankings vor dem Spiel
-                    const playersBeforeGame = allPlayers.map(p => {
-                        const eloHistory = p.eloHistory
-                            .filter(entry => new Date(entry.date) < game.date)
-                            .sort((a, b) => new Date(b.date) - new Date(a.date));
-                        
-                        // Filtere Spiele vor dem aktuellen Spiel
-                        const playerGames = allGames.filter(g => 
-                            new Date(g.date) < game.date && 
-                            (g.winner === p.name || g.loser === p.name)
-                        );
-                        
-                        const wins = playerGames.filter(g => g.winner === p.name).length;
-                        const totalGames = playerGames.length;
-                        const winRate = totalGames > 0 ? (wins / totalGames) : 0;
-                        
-                        return {
-                            name: p.name,
-                            eloRating: eloHistory[0]?.elo || 1000,
-                            gamesPlayed: totalGames,
-                            wins,
-                            winRate
-                        };
-                    });
-                    
-                    // Sortiere nach:
-                    // 1. Spieler mit Spielen kommen zuerst
-                    // 2. Elo-Rating (absteigend)
-                    // 3. Anzahl der Siege (absteigend)
-                    // 4. Siegesquote (absteigend)
-                    playersBeforeGame.sort((a, b) => {
-                        // Zuerst nach Spielerfahrung
-                        const aHasGames = a.gamesPlayed > 0;
-                        const bHasGames = b.gamesPlayed > 0;
-                        
-                        if (aHasGames !== bHasGames) {
-                            return bHasGames - aHasGames; // Spieler mit Spielen kommen nach vorne
-                        }
-                        
-                        // Wenn beide Spieler Spiele haben, nach Elo sortieren
-                        if (aHasGames && bHasGames) {
-                            if (b.eloRating !== a.eloRating) {
-                                return b.eloRating - a.eloRating;
-                            }
-                            // Bei gleichem Elo nach Siegen
-                            if (b.wins !== a.wins) {
-                                return b.wins - a.wins;
-                            }
-                            // Bei gleichen Siegen nach Siegesquote
-                            return b.winRate - a.winRate;
-                        }
-                        
-                        // Wenn beide keine Spiele haben, nach Elo sortieren
-                        return b.eloRating - a.eloRating;
-                    });
-                    
-                    const oldRankings = {};
-                    playersBeforeGame.forEach((player, index) => {
-                        oldRankings[player.name] = index + 1;
-                    });
-                    
-                    // Berechne Rankings nach dem Spiel
-                    const playersAfterGame = allPlayers.map(p => {
-                        const eloHistory = p.eloHistory
-                            .filter(entry => new Date(entry.date) <= game.date)
-                            .sort((a, b) => new Date(b.date) - new Date(a.date));
-                        
-                        // Filtere Spiele bis zum aktuellen Spiel
-                        const playerGames = allGames.filter(g => 
-                            new Date(g.date) <= game.date && 
-                            (g.winner === p.name || g.loser === p.name)
-                        );
-                        
-                        const wins = playerGames.filter(g => g.winner === p.name).length;
-                        const totalGames = playerGames.length;
-                        const winRate = totalGames > 0 ? (wins / totalGames) : 0;
-                        
-                        return {
-                            name: p.name,
-                            eloRating: eloHistory[0]?.elo || 1000,
-                            gamesPlayed: totalGames,
-                            wins,
-                            winRate
-                        };
-                    });
-                    
-                    // Sortiere nach den gleichen Kriterien wie vorher
-                    playersAfterGame.sort((a, b) => {
-                        const aHasGames = a.gamesPlayed > 0;
-                        const bHasGames = b.gamesPlayed > 0;
-                        
-                        if (aHasGames !== bHasGames) {
-                            return bHasGames - aHasGames;
-                        }
-                        
-                        if (aHasGames && bHasGames) {
-                            if (b.eloRating !== a.eloRating) {
-                                return b.eloRating - a.eloRating;
-                            }
-                            if (b.wins !== a.wins) {
-                                return b.wins - a.wins;
-                            }
-                            return b.winRate - a.winRate;
-                        }
-                        
-                        return b.eloRating - a.eloRating;
-                    });
-                    
-                    const newRankings = {};
-                    playersAfterGame.forEach((player, index) => {
-                        newRankings[player.name] = index + 1;
-                    });
-                    
-                    response += `• ${game.winner} hat gegen ${game.loser} gewonnen\n`;
-                    response += `  ${game.winner}: ${winnerEloBefore} → ${winnerEloAfter} Elo (Rang ${oldRankings[winner.name]} → ${newRankings[winner.name]})\n`;
-                    response += `  ${game.loser}: ${loserEloBefore} → ${loserEloAfter} Elo (Rang ${oldRankings[loser.name]} → ${newRankings[loser.name]})\n`;
+                    // Ränge vor/nach dem Spiel nur anhand Elo-Historie aller Spieler
+                    const ranksBefore = getRanksAtDate(allPlayersForRanks, new Date(game.date.getTime() - 1));
+                    const ranksAfter = getRanksAtDate(allPlayersForRanks, game.date);
+
+                    response += `• ${game.winner} vs ${game.loser}\n`;
+                    response += `  ${game.winner}: ${winnerEloBefore} → ${winnerEloAfter} Elo (Rang ${ranksBefore[winner.name]} → ${ranksAfter[winner.name]})\n`;
+                    response += `  ${game.loser}: ${loserEloBefore} → ${loserEloAfter} Elo (Rang ${ranksBefore[loser.name]} → ${ranksAfter[loser.name]})\n`;
                     response += `  Datum: ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}\n\n`;
                 }
                 break;
@@ -297,7 +215,7 @@ app.post('/api/slack/commands', async (req, res) => {
                     break;
                 }
                 
-                // Berechne aktuelle Rankings
+                // Berechne aktuelle Rankings (nur gespeicherte Werte verwenden)
                 const rankings = await calculateRankings();
                 const currentRank = rankings[playerName];
                 
@@ -319,7 +237,8 @@ app.post('/api/slack/commands', async (req, res) => {
                 
                 response = `*Statistiken für ${playerName}:*\n`;
                 response += `• Aktuelles Elo-Rating: ${player.eloRating} (${eloImprovement > 0 ? '+' : ''}${eloImprovement} diese Woche)\n`;
-                response += `• Aktueller Rang: ${currentRank}\n\n`;
+                response += `• Aktueller Rang: ${currentRank}\n`;
+                response += `• Spiele: ${player.gamesPlayed} | Siege: ${player.wins} | Niederlagen: ${player.losses}\n\n`;
                 
                 // Hole die letzten 3 Spiele
                 const playerGames = await Game.find({
@@ -429,77 +348,29 @@ app.post('/api/slack/commands', async (req, res) => {
                 response = 'Unbekannter Befehl. Verfügbare Befehle:\n• `/dart-last` - Zeigt die letzten 3 Spiele\n• `/dart-player [Name]` - Zeigt Statistiken für einen Spieler\n• `/dart-week` - Zeigt die Spieler der Woche';
         }
         
-        // Sende die Antwort an Slack über response_url
-        console.log('Sende Antwort an Slack über response_url:', response_url);
-        console.log('Antwort-Text:', response);
-        
-        if (!response_url) {
-            console.error('Keine response_url vorhanden');
-            return;
-        }
-
-        if (!response || response.trim() === '') {
-            console.error('Leere Antwort generiert');
-            response = 'Keine Daten verfügbar.';
-        }
-
+        // Sende die Antwort an Slack (Delayed response)
         try {
-            const responseData = {
-                response_type: 'in_channel',
-                text: response,
-                mrkdwn: true
-            };
-            
-            console.log('Sende folgende Daten an Slack:', JSON.stringify(responseData, null, 2));
-            
-            const responseResult = await fetch(response_url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(responseData)
-            });
-            
-            const responseText = await responseResult.text();
-            console.log('Slack Antwort-Text:', responseText);
-            
-            if (!responseResult.ok) {
-                console.error('Fehler beim Senden der Slack-Antwort:', {
-                    status: responseResult.status,
-                    statusText: responseResult.statusText,
-                    url: response_url,
-                    responseText: responseText
-                });
-            } else {
-                console.log('Antwort erfolgreich gesendet');
-            }
-        } catch (error) {
-            console.error('Fehler beim Senden der Slack-Antwort:', error);
-            console.error('Error Details:', {
-                message: error.message,
-                stack: error.stack
-            });
-        }
-        
-    } catch (error) {
-        console.error('Fehler bei Slash-Command:', error);
-        try {
-            const errorResponse = {
-                response_type: 'ephemeral',
-                text: 'Es ist ein Fehler aufgetreten. Bitte versuche es später erneut.'
-            };
-            
             await fetch(response_url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(errorResponse)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: response })
             });
-        } catch (slackError) {
-            console.error('Fehler beim Senden der Fehlermeldung:', slackError);
+        } catch (postErr) {
+            console.error('Fehler beim Senden der Slack-Antwort:', postErr);
         }
+
+    } catch (error) {
+        console.error('Slack Command Fehler:', error);
+        try {
+            const { response_url } = req.body || {};
+            if (response_url) {
+                await fetch(response_url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: 'Es ist ein Fehler aufgetreten.' })
+                });
+            }
+        } catch {}
     }
 });
 
@@ -647,86 +518,42 @@ app.get('/api/games', async (req, res) => {
     }
 });
 
-// Hilfsfunktion zur Berechnung der Rangliste
+// Hilfsfunktion zur Berechnung der Rangliste (nur gespeicherte Werte verwenden)
 async function calculateRankings() {
     try {
         const players = await Player.find();
-        const games = await Game.find();
         
-        // Berechne Statistiken für jeden Spieler
-        const playerStats = players.map(player => {
-            const playerGames = games.filter(game => {
-                if (game.isMultiplayer) {
-                    return game.players.includes(player.name);
-                } else {
-                    return game.winner === player.name || game.loser === player.name;
-                }
-            });
-            
-            let wins = 0;
-            let losses = 0;
-            
-            playerGames.forEach(game => {
-                if (game.isMultiplayer) {
-                    // Bei Multiplayer-Spielen zählen wir nur die Teilnahme
-                    wins += 0;
-                    losses += 1;
-                } else {
-                    // Bei 1:1 Spielen
-                    if (game.winner === player.name) {
-                        wins += 1;
-                    } else if (game.loser === player.name) {
-                        losses += 1;
-                    }
-                }
-            });
-            
-            const totalGames = playerGames.length;
-            const winRate = totalGames > 0 ? (wins / totalGames) : 0;
-            
-            return {
-                name: player.name,
-                wins,
-                totalGames,
-                winRate,
-                eloRating: player.eloRating || 1000, // Fallback auf 1000 wenn nicht gesetzt
-                gamesPlayed: player.gamesPlayed || 0  // Fallback auf 0 wenn nicht gesetzt
-            };
-        });
+        const playerStats = players.map(player => ({
+            name: player.name,
+            eloRating: player.eloRating || 1000,
+            gamesPlayed: player.gamesPlayed || 0,
+            wins: player.wins || 0
+        }));
         
         // Sortiere nach:
         // 1. Erst alle Spieler mit ≥10 Spielen (nach Elo sortiert)
         // 2. Dann alle Spieler mit <10 Spielen (nach Elo sortiert)
-        const qualifiedPlayers = playerStats
-            .filter(player => player.totalGames >= 10)
-            .sort((a, b) => {
-                if (b.eloRating !== a.eloRating) {
-                    return b.eloRating - a.eloRating;
-                }
-                return b.winRate - a.winRate;
-            });
-        
-        const unqualifiedPlayers = playerStats
-            .filter(player => player.totalGames < 10)
-            .sort((a, b) => {
-                if (b.eloRating !== a.eloRating) {
-                    return b.eloRating - a.eloRating;
-                }
-                return b.winRate - a.winRate;
-            });
-        
-        // Kombiniere beide Listen: Erst qualifizierte, dann unqualifizierte
-        const sortedPlayers = [...qualifiedPlayers, ...unqualifiedPlayers];
-        
-        // Erstelle ein Mapping von Spielername zu Rang
-        const rankings = {};
-        sortedPlayers.forEach((player, index) => {
-            rankings[player.name] = index + 1;
+        playerStats.sort((a, b) => {
+            const aExperienced = a.gamesPlayed >= 10;
+            const bExperienced = b.gamesPlayed >= 10;
+            if (aExperienced !== bExperienced) {
+                return aExperienced ? -1 : 1;
+            }
+            if (b.eloRating !== a.eloRating) {
+                return b.eloRating - a.eloRating;
+            }
+            // Falls Elo gleich: nach Siegen
+            return b.wins - a.wins;
         });
         
-        return rankings;
+        const rankingMap = {};
+        playerStats.forEach((p, index) => {
+            rankingMap[p.name] = index + 1;
+        });
+        
+        return rankingMap;
     } catch (error) {
-        console.error('Fehler bei der Berechnung der Rangliste:', error);
+        console.error('Fehler bei calculateRankings:', error);
         return {};
     }
 }
