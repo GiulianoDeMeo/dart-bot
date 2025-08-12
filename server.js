@@ -136,73 +136,64 @@ app.post('/api/slack/commands', async (req, res) => {
         switch (command) {
             case '/dart-last':
                 console.log('Verarbeite /dart-last Command');
-                // Hole die letzten 3 Spiele
-                const lastGames = await Game.find()
-                    .sort({ date: -1 })
-                    .limit(3);
-                
+                const lastGames = await Game.find().sort({ date: -1 }).limit(3);
                 console.log('Gefundene Spiele:', lastGames.length);
-                
-                // Lade alle Spieler einmal (zur Rangrekonstruktion)
-                const allPlayersForRanks = await Player.find();
 
-                // Hilfsfunktion: Ränge zum Zeitpunkt X nur anhand Elo-Historie bestimmen
-                const getRanksAtDate = (players, cutoffDate) => {
+                const allPlayersForRanks = await Player.find();
+                const allGamesData = await Game.find();
+
+                // Ränge zum Zeitpunkt X: Elo aus Historie bis cutoff; Games/Wins bis cutoff aus Games-Collection
+                const getRanksAtDate = (players, games, cutoffDate) => {
                     const snapshot = players.map(p => {
-                        const historyUpToDate = (p.eloHistory || [])
+                        const eloAtDate = (p.eloHistory || [])
                             .filter(entry => new Date(entry.date) <= cutoffDate)
-                            .sort((a, b) => new Date(b.date) - new Date(a.date));
-                        const eloAtDate = historyUpToDate[0]?.elo ?? 1000;
-                        const gamesAtDate = historyUpToDate[0]?.gamesPlayed ?? 0;
-                        const winsAtDate = historyUpToDate[0]?.wins ?? 0;
-                        return { name: p.name, elo: eloAtDate, gamesPlayed: gamesAtDate, wins: winsAtDate };
+                            .sort((a, b) => new Date(b.date) - new Date(a.date))[0]?.elo ?? 1000;
+
+                        const playerGames = games.filter(g => new Date(g.date) <= cutoffDate && (g.winner === p.name || g.loser === p.name));
+                        const totalGames = playerGames.length;
+                        const wins = playerGames.filter(g => g.winner === p.name).length;
+
+                        return { name: p.name, elo: eloAtDate, gamesPlayed: totalGames, wins };
                     });
 
-                    // Sortierung: erst Spieler mit >=10 Spielen, dann <10; jeweils nach Elo absteigend; Tiebreak: Siege
                     snapshot.sort((a, b) => {
                         const aExperienced = a.gamesPlayed >= 10;
                         const bExperienced = b.gamesPlayed >= 10;
-                        if (aExperienced !== bExperienced) {
-                            return aExperienced ? -1 : 1;
-                        }
+                        if (aExperienced !== bExperienced) return aExperienced ? -1 : 1;
                         if (b.elo !== a.elo) return b.elo - a.elo;
                         return (b.wins || 0) - (a.wins || 0);
                     });
 
                     const rankMap = {};
-                    snapshot.forEach((p, index) => {
-                        rankMap[p.name] = index + 1;
-                    });
+                    snapshot.forEach((p, i) => { rankMap[p.name] = i + 1; });
                     return rankMap;
                 };
 
-                // Hilfsfunktion: Elo vor/nach Spiel anhand gameId ermitteln (Fallback: Zeit+Gegner)
+                // Elo vor/nach Spiel: by gameId; Fallback: nächster Eintrag nach/letzter vor Zeitstempel
                 const findAfterAndBeforeElo = (playerDoc, opponentName, game) => {
                     const gameDate = new Date(game.date);
-                    // 1) Primär: über gameId matchen
-                    const byId = (playerDoc.eloHistory || []).find(e => String(e.gameId) === String(game._id));
+                    const sorted = (playerDoc.eloHistory || []).slice().sort((a,b)=> new Date(a.date) - new Date(b.date));
+
+                    // Primär: via gameId
+                    const byId = sorted.find(e => String(e.gameId) === String(game._id));
                     if (byId) {
-                        const historySorted = (playerDoc.eloHistory || []).sort((a,b)=> new Date(a.date) - new Date(b.date));
-                        const idx = historySorted.findIndex(e => String(e._id) === String(byId._id));
-                        const after = historySorted[idx]?.elo ?? 1000;
-                        const before = historySorted[idx - 1]?.elo ?? 1000;
+                        const idx = sorted.findIndex(e => String(e._id) === String(byId._id));
+                        const after = sorted[idx]?.elo ?? 1000;
+                        // before = letzter Eintrag vor idx
+                        let beforeIdx = idx - 1;
+                        while (beforeIdx >= 0 && new Date(sorted[beforeIdx].date) >= gameDate) beforeIdx--;
+                        const before = beforeIdx >= 0 ? sorted[beforeIdx].elo : 1000;
                         return { after, before };
                     }
-                    // 2) Fallback: nach Zeitfenster + Gegner
-                    const toleranceMs = 2 * 60 * 60 * 1000;
-                    const history = (playerDoc.eloHistory || []).sort((a,b)=> new Date(a.date) - new Date(b.date));
-                    let idx = history.findIndex(entry => {
-                        const dt = new Date(entry.date).getTime();
-                        return Math.abs(dt - gameDate.getTime()) <= toleranceMs && entry.opponent === opponentName;
-                    });
-                    if (idx === -1) {
-                        idx = history.findIndex(entry => new Date(entry.date) >= gameDate);
+
+                    // Fallback: strict vor/nach per Datum
+                    const afterEntry = sorted.find(e => new Date(e.date) >= gameDate);
+                    let beforeEntry = null;
+                    for (let i = sorted.length - 1; i >= 0; i--) {
+                        if (new Date(sorted[i].date) < gameDate) { beforeEntry = sorted[i]; break; }
                     }
-                    if (idx === -1) {
-                        return { after: history[history.length - 1]?.elo ?? 1000, before: history[history.length - 2]?.elo ?? 1000 };
-                    }
-                    const after = history[idx]?.elo ?? 1000;
-                    const before = history[idx - 1]?.elo ?? 1000;
+                    const after = afterEntry?.elo ?? (sorted[sorted.length-1]?.elo ?? 1000);
+                    const before = beforeEntry?.elo ?? 1000;
                     return { after, before };
                 };
                 
@@ -210,18 +201,13 @@ app.post('/api/slack/commands', async (req, res) => {
                 for (const game of lastGames) {
                     const winner = await Player.findOne({ name: game.winner });
                     const loser = await Player.findOne({ name: game.loser });
-                    
-                    if (!winner || !loser) {
-                        console.log('Spieler nicht gefunden:', { winner: game.winner, loser: game.loser });
-                        continue;
-                    }
-                    
+                    if (!winner || !loser) continue;
+
                     const { after: winnerEloAfter, before: winnerEloBefore } = findAfterAndBeforeElo(winner, loser.name, game);
                     const { after: loserEloAfter, before: loserEloBefore } = findAfterAndBeforeElo(loser, winner.name, game);
 
-                    // Ränge vor/nach dem Spiel nur anhand Elo-Historie aller Spieler
-                    const ranksBefore = getRanksAtDate(allPlayersForRanks, new Date(new Date(game.date).getTime() - 1));
-                    const ranksAfter = getRanksAtDate(allPlayersForRanks, new Date(game.date));
+                    const ranksBefore = getRanksAtDate(allPlayersForRanks, allGamesData, new Date(new Date(game.date).getTime() - 1));
+                    const ranksAfter = getRanksAtDate(allPlayersForRanks, allGamesData, new Date(game.date));
 
                     response += `• ${game.winner} vs ${game.loser}\n`;
                     response += `  ${game.winner}: ${winnerEloBefore} → ${winnerEloAfter} Elo (Rang ${ranksBefore[winner.name]} → ${ranksAfter[winner.name]})\n`;
