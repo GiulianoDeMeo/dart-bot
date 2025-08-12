@@ -69,7 +69,14 @@ const playerSchema = new mongoose.Schema({
     gamesPlayed: { type: Number, default: 0 },   // Für K-Faktor Berechnung
     eloHistory: [{
         elo: { type: Number, required: true },
-        date: { type: Date, required: true }
+        date: { type: Date, required: true },
+        gameId: { type: mongoose.Schema.Types.ObjectId, ref: 'Game' },
+        change: { type: Number },
+        opponent: { type: String },
+        result: { type: String, enum: ['win','loss','initial'] },
+        gamesPlayed: { type: Number },
+        wins: { type: Number },
+        losses: { type: Number }
     }],
     wins: { type: Number, default: 0 }, // Hinzugefügt für die neue Route
     losses: { type: Number, default: 0 } // Hinzugefügt für die neue Route
@@ -147,17 +154,19 @@ app.post('/api/slack/commands', async (req, res) => {
                             .sort((a, b) => new Date(b.date) - new Date(a.date));
                         const eloAtDate = historyUpToDate[0]?.elo ?? 1000;
                         const gamesAtDate = historyUpToDate[0]?.gamesPlayed ?? 0;
-                        return { name: p.name, elo: eloAtDate, gamesPlayed: gamesAtDate };
+                        const winsAtDate = historyUpToDate[0]?.wins ?? 0;
+                        return { name: p.name, elo: eloAtDate, gamesPlayed: gamesAtDate, wins: winsAtDate };
                     });
 
-                    // Sortierung: erst Spieler mit >=10 Spielen, dann <10; jeweils nach Elo absteigend
+                    // Sortierung: erst Spieler mit >=10 Spielen, dann <10; jeweils nach Elo absteigend; Tiebreak: Siege
                     snapshot.sort((a, b) => {
                         const aExperienced = a.gamesPlayed >= 10;
                         const bExperienced = b.gamesPlayed >= 10;
                         if (aExperienced !== bExperienced) {
                             return aExperienced ? -1 : 1;
                         }
-                        return b.elo - a.elo;
+                        if (b.elo !== a.elo) return b.elo - a.elo;
+                        return (b.wins || 0) - (a.wins || 0);
                     });
 
                     const rankMap = {};
@@ -165,6 +174,36 @@ app.post('/api/slack/commands', async (req, res) => {
                         rankMap[p.name] = index + 1;
                     });
                     return rankMap;
+                };
+
+                // Hilfsfunktion: Elo vor/nach Spiel anhand gameId ermitteln (Fallback: Zeit+Gegner)
+                const findAfterAndBeforeElo = (playerDoc, opponentName, game) => {
+                    const gameDate = new Date(game.date);
+                    // 1) Primär: über gameId matchen
+                    const byId = (playerDoc.eloHistory || []).find(e => String(e.gameId) === String(game._id));
+                    if (byId) {
+                        const historySorted = (playerDoc.eloHistory || []).sort((a,b)=> new Date(a.date) - new Date(b.date));
+                        const idx = historySorted.findIndex(e => String(e._id) === String(byId._id));
+                        const after = historySorted[idx]?.elo ?? 1000;
+                        const before = historySorted[idx - 1]?.elo ?? 1000;
+                        return { after, before };
+                    }
+                    // 2) Fallback: nach Zeitfenster + Gegner
+                    const toleranceMs = 2 * 60 * 60 * 1000;
+                    const history = (playerDoc.eloHistory || []).sort((a,b)=> new Date(a.date) - new Date(b.date));
+                    let idx = history.findIndex(entry => {
+                        const dt = new Date(entry.date).getTime();
+                        return Math.abs(dt - gameDate.getTime()) <= toleranceMs && entry.opponent === opponentName;
+                    });
+                    if (idx === -1) {
+                        idx = history.findIndex(entry => new Date(entry.date) >= gameDate);
+                    }
+                    if (idx === -1) {
+                        return { after: history[history.length - 1]?.elo ?? 1000, before: history[history.length - 2]?.elo ?? 1000 };
+                    }
+                    const after = history[idx]?.elo ?? 1000;
+                    const before = history[idx - 1]?.elo ?? 1000;
+                    return { after, before };
                 };
                 
                 response = '*Letzte 3 Spiele:*\n';
@@ -177,27 +216,17 @@ app.post('/api/slack/commands', async (req, res) => {
                         continue;
                     }
                     
-                    // Elo vor/nach dem Spiel aus Historie bestimmen
-                    const winnerEloHistory = winner.eloHistory
-                        .filter(entry => new Date(entry.date) <= game.date)
-                        .sort((a, b) => new Date(b.date) - new Date(a.date));
-                    const loserEloHistory = loser.eloHistory
-                        .filter(entry => new Date(entry.date) <= game.date)
-                        .sort((a, b) => new Date(b.date) - new Date(a.date));
-                    
-                    const winnerEloAfter = winnerEloHistory[0]?.elo || 1000;  // Wert nach dem Spiel
-                    const winnerEloBefore = winnerEloHistory[1]?.elo || 1000; // Wert vor dem Spiel
-                    const loserEloAfter = loserEloHistory[0]?.elo || 1000;    // Wert nach dem Spiel
-                    const loserEloBefore = loserEloHistory[1]?.elo || 1000;   // Wert vor dem Spiel
+                    const { after: winnerEloAfter, before: winnerEloBefore } = findAfterAndBeforeElo(winner, loser.name, game);
+                    const { after: loserEloAfter, before: loserEloBefore } = findAfterAndBeforeElo(loser, winner.name, game);
 
                     // Ränge vor/nach dem Spiel nur anhand Elo-Historie aller Spieler
-                    const ranksBefore = getRanksAtDate(allPlayersForRanks, new Date(game.date.getTime() - 1));
-                    const ranksAfter = getRanksAtDate(allPlayersForRanks, game.date);
+                    const ranksBefore = getRanksAtDate(allPlayersForRanks, new Date(new Date(game.date).getTime() - 1));
+                    const ranksAfter = getRanksAtDate(allPlayersForRanks, new Date(game.date));
 
                     response += `• ${game.winner} vs ${game.loser}\n`;
                     response += `  ${game.winner}: ${winnerEloBefore} → ${winnerEloAfter} Elo (Rang ${ranksBefore[winner.name]} → ${ranksAfter[winner.name]})\n`;
                     response += `  ${game.loser}: ${loserEloBefore} → ${loserEloAfter} Elo (Rang ${ranksBefore[loser.name]} → ${ranksAfter[loser.name]})\n`;
-                    response += `  Datum: ${game.date.toLocaleDateString('de-DE')} ${game.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}\n\n`;
+                    response += `  Datum: ${new Date(game.date).toLocaleDateString('de-DE')} ${new Date(game.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}\n\n`;
                 }
                 break;
                 
@@ -386,7 +415,7 @@ function calculateKFactor(gamesPlayed) {
     return 16;                        // Experten
 }
 
-function updateEloRatings(winner, loser, gameDate) {
+function updateEloRatings(winner, loser, gameDate, gameId) {
     const kWinner = calculateKFactor(winner.gamesPlayed);
     const kLoser = calculateKFactor(loser.gamesPlayed);
     
@@ -405,7 +434,7 @@ function updateEloRatings(winner, loser, gameDate) {
     winner.eloRating = Math.round(winnerElo + winnerChange);
     loser.eloRating = Math.round(loserElo + loserChange);
     
-    // Update Spieleanzahl und Siege/Niederlagen
+    // Update Spieleanzahl und SiegelNiederlagen
     winner.gamesPlayed += 1;
     loser.gamesPlayed += 1;
     winner.wins += 1;
@@ -415,6 +444,7 @@ function updateEloRatings(winner, loser, gameDate) {
     winner.eloHistory.push({ 
         elo: winner.eloRating, 
         date: gameDate,
+        gameId: gameId,
         change: winnerChange,
         opponent: loser.name,
         result: 'win',
@@ -426,6 +456,7 @@ function updateEloRatings(winner, loser, gameDate) {
     loser.eloHistory.push({ 
         elo: loser.eloRating, 
         date: gameDate,
+        gameId: gameId,
         change: loserChange,
         opponent: winner.name,
         result: 'loss',
@@ -444,7 +475,7 @@ async function recalculateEloRatings() {
             gamesPlayed: 0,
             wins: 0,
             losses: 0,
-            eloHistory: [{ elo: 1000, date: new Date(0) }] // Initialer Eintrag
+            eloHistory: [{ elo: 1000, date: new Date(0), result: 'initial' }] // Initialer Eintrag
         });
         
         // Hole alle Spiele chronologisch sortiert
@@ -456,8 +487,8 @@ async function recalculateEloRatings() {
             const loser = await Player.findOne({ name: game.loser });
             
             if (winner && loser) {
-                // Update Elo Ratings mit dem tatsächlichen Spiel-Datum
-                updateEloRatings(winner, loser, game.date);
+                // Update Elo Ratings mit dem tatsächlichen Spiel-Datum und gameId
+                updateEloRatings(winner, loser, game.date, game._id);
                 await winner.save();
                 await loser.save();
             }
@@ -598,8 +629,8 @@ app.post('/api/games', async (req, res) => {
             
             console.log('Alte Rankings:', { winner: winnerOldRank, loser: loserOldRank });
             
-            // Update Elo Ratings mit Spiel-Datum
-            updateEloRatings(winnerPlayer, loserPlayer, gameDate);
+            // Update Elo Ratings mit Spiel-Datum (verwende dieselbe Zeit und verknüpfe gameId)
+            updateEloRatings(winnerPlayer, loserPlayer, germanDate, game._id);
             
             // Speichere die aktualisierten Spieler
             await winnerPlayer.save();
